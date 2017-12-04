@@ -28,12 +28,15 @@ void setup() {
 }
 
 void loop() {
-  clearDisplay();
-  displayBorderX();
-  delayMicroseconds(10);
-  clearDisplay();
-  displayBorderY();
-  delayMicroseconds(10);
+  for (int i = 0; i < 8; i++)
+  {
+    for (int j = 0; j < 8; j++)
+    {
+      clearDisplay();
+      drawPoint(i,j);
+      delay(100);
+    }
+  }
 }
 
 void clearDisplay() {
@@ -41,6 +44,11 @@ void clearDisplay() {
     digitalWrite(col[i], HIGH);
     digitalWrite(row[i], LOW);
   }
+}
+
+void drawPoint(int x, int y) {
+  digitalWrite(row[x], HIGH);
+  digitalWrite(col[y], LOW);
 }
 
 void displayBorderX() {
