@@ -19,8 +19,12 @@ const int vertiRows[28] = {0,-1,-1,-1,-1,-1,-1,0,1,2,3,4,5,6,7,-1,-1,-1,-1,-1,-1
 
 
 void setup() {
-  // put your setup code here, to run once:
-
+  // setup 8x8 pins for output
+  for (int i = 0; i < 8; i++)
+  {
+    pinMode(row[i], OUTPUT);
+    pinMode(col[i], OUTPUT);
+  }
 }
 
 void loop() {
