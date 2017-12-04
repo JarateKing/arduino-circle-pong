@@ -28,6 +28,34 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  clearDisplay();
+  displayBorderX();
+  delayMicroseconds(10);
+  clearDisplay();
+  displayBorderY();
+  delayMicroseconds(10);
+}
 
+void clearDisplay() {
+  for (int i = 0; i < 8; i++) {
+    digitalWrite(col[i], HIGH);
+    digitalWrite(row[i], LOW);
+  }
+}
+
+void displayBorderX() {
+  for (int i = 0; i < 8; i++) {
+    digitalWrite(row[i], HIGH);
+  }
+
+  digitalWrite(col[0], LOW);
+  digitalWrite(col[7], LOW);
+}
+void displayBorderY() {
+  for (int i = 0; i < 8; i++) {
+    digitalWrite(col[i], LOW);
+  }
+
+  digitalWrite(row[0], HIGH);
+  digitalWrite(row[7], HIGH);
 }
