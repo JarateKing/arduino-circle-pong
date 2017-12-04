@@ -1,12 +1,22 @@
-// inputting the position, these arrays will give you what column & row to enable
-// hori is for the top and bottom display cycle, verti is for the left and right sides
+// 8x8 display pins
+// on display component, 9-16 are top row (side with label), 8-1 are bottom row
+// COMPONENT:  1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  16
+// PIN NUMBER: 52  50  48  46  44  42  40  38  39  41  43  45  47  49  51  53
+// ROW / COL:  c1  c2  r7  c8  r8  c5  c3  r5  r6  r3  c4  r1  c6  c7  r2  r4
+
+const int row[8] = {45,51,41,53,38,39,48,44};
+const int col[8] = {52,50,40,43,42,47,49,46};
+
+// inputting the position, these arrays will give you what column/row to enable
 // position goes clockwise from the topright corner, 0-27
 // -1 is for not enabling anything
-int horiColumns[28] = {0,1,2,3,4,5,6,7,-1,-1,-1,-1,-1,-1,7,6,5,4,3,2,1,0,-1,-1,-1,-1,-1,-1};
-int horiRows[28] = {0,0,0,0,0,0,0,0,-1,-1,-1,-1,-1,-1,7,7,7,7,7,7,7,7,-1,-1,-1,-1,-1,-1};
 
-int vertiColumns[28] = {0,-1,-1,-1,-1,-1,-1,7,7,7,7,7,7,7,7,-1,-1,-1,-1,-1,-1,0,0,0,0,0,0,0};
-int vertiRows[28] = {0,-1,-1,-1,-1,-1,-1,0,1,2,3,4,5,6,7,-1,-1,-1,-1,-1,-1,7,6,5,4,3,2,1};
+const int horiColumns[28] = {0,1,2,3,4,5,6,7,-1,-1,-1,-1,-1,-1,7,6,5,4,3,2,1,0,-1,-1,-1,-1,-1,-1};
+const int horiRows[28] = {0,0,0,0,0,0,0,0,-1,-1,-1,-1,-1,-1,7,7,7,7,7,7,7,7,-1,-1,-1,-1,-1,-1};
+
+const int vertiColumns[28] = {0,-1,-1,-1,-1,-1,-1,7,7,7,7,7,7,7,7,-1,-1,-1,-1,-1,-1,0,0,0,0,0,0,0};
+const int vertiRows[28] = {0,-1,-1,-1,-1,-1,-1,0,1,2,3,4,5,6,7,-1,-1,-1,-1,-1,-1,7,6,5,4,3,2,1};
+
 
 void setup() {
   // put your setup code here, to run once:
