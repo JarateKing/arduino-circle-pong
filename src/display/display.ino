@@ -3,9 +3,9 @@
 // COMPONENT:  1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  16
 // PIN NUMBER: 52  50  48  46  44  42  40  38  39  41  43  45  47  49  51  53
 // ROW / COL:  c1  c2  r7  c8  r8  c5  c3  r5  r6  r3  c4  r1  c6  c7  r2  r4
-
-const int row[8] = {45,51,41,53,38,39,48,44};
-const int col[8] = {52,50,40,43,42,47,49,46};
+// TODO: make the comment pin assignments reflect the ones used in code
+const int row[8] = {45,51,41,53,44,39,48,40};
+const int col[8] = {52,50,42,43,38,47,49,46};
 
 // inputting the position, these arrays will give you what column/row to enable
 // position goes clockwise from the topright corner, 0-27
