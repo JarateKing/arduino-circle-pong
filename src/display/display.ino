@@ -47,8 +47,8 @@ void clearDisplay() {
 }
 
 void drawPoint(int x, int y) {
-  digitalWrite(row[x], HIGH);
-  digitalWrite(col[y], LOW);
+  digitalWrite(col[x], LOW);
+  digitalWrite(row[y], HIGH);
 }
 
 void displayBorderX() {
