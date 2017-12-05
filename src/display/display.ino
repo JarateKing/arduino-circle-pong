@@ -28,13 +28,24 @@ void setup() {
 }
 
 void loop() {
-  for (int i = 0; i < 8; i++)
+  for (int i = 0; i < 28; i++)
   {
-    for (int j = 0; j < 8; j++)
+    for (int j = 0; j < 1000; j++)
     {
       clearDisplay();
-      drawPoint(i,j);
-      delay(100);
+      drawPaddleX((i + 26) % 28);
+      drawPaddleX((i + 27) % 28);
+      drawPaddleX(i);
+      drawPaddleX((i + 1) % 28);
+      drawPaddleX((i + 2) % 28);
+      delayMicroseconds(10);
+      clearDisplay();
+      drawPaddleY((i + 26) % 28);
+      drawPaddleY((i + 27) % 28);
+      drawPaddleY(i);
+      drawPaddleY((i + 1) % 28);
+      drawPaddleY((i + 2) % 28);
+      delayMicroseconds(10);
     }
   }
 }
@@ -44,6 +55,15 @@ void clearDisplay() {
     digitalWrite(col[i], HIGH);
     digitalWrite(row[i], LOW);
   }
+}
+
+void drawPaddleX(int pos) {
+  if (horiColumns[pos] != -1 && horiRows[pos] != -1)
+    drawPoint(horiColumns[pos], horiRows[pos]);
+}
+void drawPaddleY(int pos) {
+  if (vertiColumns[pos] != -1 && vertiRows[pos] != -1)
+    drawPoint(vertiColumns[pos], vertiRows[pos]);
 }
 
 void drawPoint(int x, int y) {
