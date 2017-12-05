@@ -1,9 +1,19 @@
+// input pins
+// these decide where to display things
+// paddlePins is the bits for a number 0-27
+// posPins is for 0-8 on both the X and Y axis
+
+const int paddlePins[5] = {22,24,26,28,30};
+const int posPinsX[3] = {23,25,27};
+const int posPinsY[3] = {29,31,33};
+
 // 8x8 display pins
 // on display component, 9-16 are top row (side with label), 8-1 are bottom row
 // COMPONENT:  1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  16
 // PIN NUMBER: 52  50  48  46  44  42  40  38  39  41  43  45  47  49  51  53
 // ROW / COL:  c1  c2  r7  c8  r8  c5  c3  r5  r6  r3  c4  r1  c6  c7  r2  r4
 // TODO: make the comment pin assignments reflect the ones used in code
+
 const int row[8] = {45,51,41,53,44,39,48,40};
 const int col[8] = {52,50,42,43,38,47,49,46};
 
