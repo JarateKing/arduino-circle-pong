@@ -32,22 +32,30 @@ void loop() {
   {
     for (int j = 0; j < 1000; j++)
     {
-      clearDisplay();
-      drawPaddleX((i + 26) % 28);
-      drawPaddleX((i + 27) % 28);
-      drawPaddleX(i);
-      drawPaddleX((i + 1) % 28);
-      drawPaddleX((i + 2) % 28);
-      delayMicroseconds(10);
-      clearDisplay();
-      drawPaddleY((i + 26) % 28);
-      drawPaddleY((i + 27) % 28);
-      drawPaddleY(i);
-      drawPaddleY((i + 1) % 28);
-      drawPaddleY((i + 2) % 28);
-      delayMicroseconds(10);
+      draw(i,3 + i % 2,3 + i % 2);
     }
   }
+}
+
+void draw(int paddlePos, int pointX, int pointY) {
+  clearDisplay();
+  drawPaddleX((paddlePos + 26) % 28);
+  drawPaddleX((paddlePos + 27) % 28);
+  drawPaddleX(paddlePos);
+  drawPaddleX((paddlePos + 1) % 28);
+  drawPaddleX((paddlePos + 2) % 28);
+  delayMicroseconds(10);
+  
+  clearDisplay();
+  drawPaddleY((paddlePos + 26) % 28);
+  drawPaddleY((paddlePos + 27) % 28);
+  drawPaddleY(paddlePos);
+  drawPaddleY((paddlePos + 1) % 28);
+  drawPaddleY((paddlePos + 2) % 28);
+  delayMicroseconds(10);
+
+  clearDisplay();
+  drawPoint(pointX,pointY);
 }
 
 void clearDisplay() {
