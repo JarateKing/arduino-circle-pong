@@ -32,6 +32,7 @@ void loop() {
     sendNumber(paddlePins, 5, i % 28);
     sendNumber(posPinsX, 3, i % 6 + 1);
     sendNumber(posPinsY, 3, i % 6 + 1);
+    debugDraw(i % 28, i % 6 + 1, i % 6 + 1);
     digitalWrite(dataReadyPin, HIGH);
     delay(2);
     digitalWrite(dataReadyPin, LOW);
@@ -48,5 +49,79 @@ void sendNumber(int pins[], int pinSize, int num)
   {
     digitalWrite(pins[i], bitRead(num, i));
   }
+}
+
+// draw current display board to serial monitor
+// is not a clean function, but is functional for debugging
+void debugDraw(int paddle, int x, int y)
+{
+  Serial.println();
+  Serial.println();
+  Serial.println();
+  Serial.println();
+  Serial.println();
+  Serial.println();
+  Serial.println();
+
+  // top line
+  for (int i = 0; i < 8; i++)
+  {
+    if ((i >= paddle - 2 && i <= paddle + 2) || (paddle == 26 && i == 0) || (paddle == 27 && i <= 1)) 
+    {
+      Serial.print("X");
+    }
+    else
+    {
+      Serial.print("-");
+    }
+  }
+  Serial.println();
+
+  // lines 1-6
+  for (int i = 1; i < 7; i++)
+  {
+    if((28 - i >= paddle - 2 && 28 - i <= paddle + 2) || (paddle == 0 && i <= 2) || (paddle == 1 && i == 1))
+    {
+      Serial.print("X");
+    }
+    else
+    {
+      Serial.print("-");
+    }
+    for (int j = 1; j < 7; j++)
+    {
+      if (x == j && y == i)
+      {
+        Serial.print("O");
+      }
+      else
+      {
+        Serial.print(".");
+      }
+    }
+    if(i + 7 >= paddle - 2 && i + 7 <= paddle + 2)
+    {
+      Serial.print("X");
+    }
+    else
+    {
+      Serial.print("-");
+    }
+    Serial.println();
+  }
+
+  // bottom line
+  for (int i = 7; i >= 0; i--)
+  {
+    if (i + 14 >= paddle - 2 && i  + 14 <= paddle + 2)
+    {
+      Serial.print("X");
+    }
+    else
+    {
+      Serial.print("-");
+    }
+  }
+  Serial.println();
 }
 
