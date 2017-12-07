@@ -35,6 +35,17 @@ void setup() {
     pinMode(row[i], OUTPUT);
     pinMode(col[i], OUTPUT);
   }
+  // setup paddle reading pins
+  for (int i = 0; i < 5; i++)
+  {
+    pinMode(paddlePins[i], INPUT);
+  }
+  // setup position reading pins
+  for (int i = 0; i < 3; i++)
+  {
+    pinMode(posPinsX[i], INPUT);
+    pinMode(posPinsY[i], INPUT);
+  }
 }
 
 void loop() {
@@ -75,7 +86,7 @@ void draw(int paddlePos, int pointX, int pointY) {
 
   clearDisplay();
   drawPoint(pointX,pointY);
-  delayMicroseconds(10);
+  delayMicroseconds(1);
 }
 
 void clearDisplay() {
