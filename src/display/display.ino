@@ -27,6 +27,9 @@ const int horiRows[28] = {0,0,0,0,0,0,0,0,-1,-1,-1,-1,-1,-1,7,7,7,7,7,7,7,7,-1,-
 const int vertiColumns[28] = {0,-1,-1,-1,-1,-1,-1,7,7,7,7,7,7,7,7,-1,-1,-1,-1,-1,-1,0,0,0,0,0,0,0};
 const int vertiRows[28] = {0,-1,-1,-1,-1,-1,-1,0,1,2,3,4,5,6,7,-1,-1,-1,-1,-1,-1,7,6,5,4,3,2,1};
 
+// pin for indicating data is ready to receive
+const int dataReadyPin = 5;
+
 
 void setup() {
   // setup 8x8 pins for output
@@ -46,13 +49,20 @@ void setup() {
     pinMode(posPinsX[i], INPUT);
     pinMode(posPinsY[i], INPUT);
   }
+  pinMode(dataReadyPin, INPUT);
 }
 
-void loop() {
+int paddle = 0;
+int ballx = 0;
+int bally = 0;
 
-  int paddle = convertPins(paddlePins, 5);
-  int ballx = convertPins(posPinsX, 3);
-  int bally = convertPins(posPinsY, 3);
+void loop() {
+  if (digitalRead(dataReadyPin))
+  {
+    paddle = convertPins(paddlePins, 5);
+    ballx = convertPins(posPinsX, 3);
+    bally = convertPins(posPinsY, 3);
+  }
   
   draw(paddle,ballx,bally);
 }
@@ -60,9 +70,11 @@ void loop() {
 int convertPins(int pins[], int pinSize)
 {
   int sum = 0;
+  int power = 1;
   for (int i = 0; i < pinSize; i++)
   {
-    sum += pow(2,i) * digitalRead(pins[i]);
+    sum += power * digitalRead(pins[i]);
+    power *= 2;
   }
   return sum;
 }
@@ -74,7 +86,7 @@ void draw(int paddlePos, int pointX, int pointY) {
   drawPaddleX(paddlePos);
   drawPaddleX((paddlePos + 1) % 28);
   drawPaddleX((paddlePos + 2) % 28);
-  delayMicroseconds(2000);
+  delayMicroseconds(2);
   
   clearDisplay();
   drawPaddleY((paddlePos + 26) % 28);
@@ -82,7 +94,7 @@ void draw(int paddlePos, int pointX, int pointY) {
   drawPaddleY(paddlePos);
   drawPaddleY((paddlePos + 1) % 28);
   drawPaddleY((paddlePos + 2) % 28);
-  delayMicroseconds(2000);
+  delayMicroseconds(2);
 
   clearDisplay();
   drawPoint(pointX,pointY);
