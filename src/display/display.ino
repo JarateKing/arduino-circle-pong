@@ -38,13 +38,12 @@ void setup() {
 }
 
 void loop() {
-  for (int i = 0; i < 28; i++)
-  {
-    for (int j = 0; j < 1000; j++)
-    {
-      draw(i,3 + i % 2,3 + i % 2);
-    }
-  }
+
+  int paddle = convertPins(paddlePins, 5);
+  int ballx = convertPins(posPinsX, 3);
+  int bally = convertPins(posPinsY, 3);
+  
+  draw(paddle,ballx,bally);
 }
 
 int convertPins(int pins[], int pinSize)
@@ -64,7 +63,7 @@ void draw(int paddlePos, int pointX, int pointY) {
   drawPaddleX(paddlePos);
   drawPaddleX((paddlePos + 1) % 28);
   drawPaddleX((paddlePos + 2) % 28);
-  delayMicroseconds(10);
+  delayMicroseconds(2000);
   
   clearDisplay();
   drawPaddleY((paddlePos + 26) % 28);
@@ -72,10 +71,11 @@ void draw(int paddlePos, int pointX, int pointY) {
   drawPaddleY(paddlePos);
   drawPaddleY((paddlePos + 1) % 28);
   drawPaddleY((paddlePos + 2) % 28);
-  delayMicroseconds(10);
+  delayMicroseconds(2000);
 
   clearDisplay();
   drawPoint(pointX,pointY);
+  delayMicroseconds(10);
 }
 
 void clearDisplay() {
