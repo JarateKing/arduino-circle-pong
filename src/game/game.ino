@@ -27,9 +27,11 @@ void setup() {
 }
 
 void loop() {
-  for (int i = 0; i < 28; i++)
+  for (int i = 0; i < 168; i++)
   {
-    sendNumber(paddlePins, 5, i);
+    sendNumber(paddlePins, 5, i % 28);
+    sendNumber(posPinsX, 3, i % 6 + 1);
+    sendNumber(posPinsY, 3, i % 6 + 1);
     digitalWrite(dataReadyPin, HIGH);
     delay(2);
     digitalWrite(dataReadyPin, LOW);
