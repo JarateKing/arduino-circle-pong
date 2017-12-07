@@ -86,7 +86,7 @@ void draw(int paddlePos, int pointX, int pointY) {
   drawPaddleX(paddlePos);
   drawPaddleX((paddlePos + 1) % 28);
   drawPaddleX((paddlePos + 2) % 28);
-  delayMicroseconds(2);
+  delayMicroseconds(20);
   
   clearDisplay();
   drawPaddleY((paddlePos + 26) % 28);
@@ -94,7 +94,7 @@ void draw(int paddlePos, int pointX, int pointY) {
   drawPaddleY(paddlePos);
   drawPaddleY((paddlePos + 1) % 28);
   drawPaddleY((paddlePos + 2) % 28);
-  delayMicroseconds(2);
+  delayMicroseconds(35);
 
   clearDisplay();
   drawPoint(pointX,pointY);
