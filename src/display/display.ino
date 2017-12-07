@@ -47,6 +47,16 @@ void loop() {
   }
 }
 
+int convertPins(int pins[], int pinSize)
+{
+  int sum = 0;
+  for (int i = 0; i < pinSize; i++)
+  {
+    sum += pow(2,i) * digitalRead(pins[i]);
+  }
+  return sum;
+}
+
 void draw(int paddlePos, int pointX, int pointY) {
   clearDisplay();
   drawPaddleX((paddlePos + 26) % 28);
