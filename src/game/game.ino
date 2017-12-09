@@ -47,6 +47,7 @@ void loop() {
   for (int i = 0; i < 168; i++)
   { 
     drawScore();
+    currentScore += 100;
   
     sendNumber(paddlePins, 5, i % 28);
     sendNumber(posPinsX, 3, i % 6 + 1);
@@ -65,8 +66,18 @@ void drawScore()
 {
   lcd.setCursor(0,0);
   lcd.print("BEST");
+  if (bestScore == 0)
+    lcd.setCursor(15,0);
+  else
+    lcd.setCursor(16 - log10(bestScore),0);
+  lcd.print(bestScore);
   lcd.setCursor(0,1);
   lcd.print("SCORE");
+  if (currentScore == 0)
+    lcd.setCursor(15,1);
+  else
+    lcd.setCursor(16 - log10(currentScore),1);
+  lcd.print(currentScore);
 }
 
 void sendNumber(int pins[], int pinSize, int num)
