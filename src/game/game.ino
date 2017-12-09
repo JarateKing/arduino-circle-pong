@@ -1,9 +1,13 @@
 // score display output
-// SDA = A4, SCL = A5
+// SDA = 20, SCL = 21
 
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 LiquidCrystal_I2C lcd(0x38, 16, 2);
+
+// score variables
+int currentScore;
+int bestScore;
 
 // display output pins
 // these decide where to display things
@@ -35,21 +39,34 @@ void setup() {
   // scoreboard setup
   lcd.init();
   lcd.backlight();
+  currentScore = 0;
+  bestScore = 0;
 }
 
 void loop() {
   for (int i = 0; i < 168; i++)
-  {
+  { 
+    drawScore();
+  
     sendNumber(paddlePins, 5, i % 28);
     sendNumber(posPinsX, 3, i % 6 + 1);
     sendNumber(posPinsY, 3, i % 6 + 1);
     debugDraw(i % 28, i % 6 + 1, i % 6 + 1);
+
     digitalWrite(dataReadyPin, HIGH);
     delay(2);
     digitalWrite(dataReadyPin, LOW);
     delay(490);
   }
 
+}
+
+void drawScore()
+{
+  lcd.setCursor(0,0);
+  lcd.print("BEST");
+  lcd.setCursor(0,1);
+  lcd.print("SCORE");
 }
 
 void sendNumber(int pins[], int pinSize, int num)
