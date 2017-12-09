@@ -1,3 +1,10 @@
+// score display output
+// SDA = A4, SCL = A5
+
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+LiquidCrystal_I2C lcd(0x38, 16, 2);
+
 // display output pins
 // these decide where to display things
 // paddlePins is the bits for a number 0-27
@@ -24,6 +31,10 @@ void setup() {
     pinMode(posPinsY[i], OUTPUT);
   }
   pinMode(dataReadyPin, OUTPUT);
+
+  // scoreboard setup
+  lcd.init();
+  lcd.backlight();
 }
 
 void loop() {
