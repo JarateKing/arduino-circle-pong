@@ -6,8 +6,8 @@
 LiquidCrystal_I2C lcd(0x38, 16, 2);
 
 // score variables
-int currentScore;
-int bestScore;
+long currentScore;
+long bestScore;
 
 // display output pins
 // these decide where to display things
@@ -47,7 +47,7 @@ void loop() {
   for (int i = 0; i < 168; i++)
   { 
     drawScore();
-    currentScore += 100;
+    currentScore += 1000000;
   
     sendNumber(paddlePins, 5, i % 28);
     sendNumber(posPinsX, 3, i % 6 + 1);
@@ -69,14 +69,14 @@ void drawScore()
   if (bestScore == 0)
     lcd.setCursor(15,0);
   else
-    lcd.setCursor(16 - log10(bestScore),0);
+    lcd.setCursor(16 - floor(log10(bestScore))+1,0);
   lcd.print(bestScore);
   lcd.setCursor(0,1);
   lcd.print("SCORE");
   if (currentScore == 0)
     lcd.setCursor(15,1);
   else
-    lcd.setCursor(16 - log10(currentScore),1);
+    lcd.setCursor(16 - floor(log10(currentScore))+1,1);
   lcd.print(currentScore);
 }
 
@@ -99,7 +99,8 @@ void debugDraw(int paddle, int x, int y)
   Serial.println();
   Serial.println();
   Serial.println();
-  Serial.println();
+  Serial.println("BEST   " + String(bestScore));
+  Serial.println("SCORE  " + String(currentScore));
   Serial.println();
 
   // top line
