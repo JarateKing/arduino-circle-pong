@@ -9,6 +9,12 @@ LiquidCrystal_I2C lcd(0x38, 16, 2);
 long currentScore;
 long bestScore;
 
+// joystick input
+const int joyXPin = A1;
+const int joyYPin = A2;
+float angle;
+int discreteAngle;
+
 // display output pins
 // these decide where to display things
 // paddlePins is the bits for a number 0-27
@@ -41,18 +47,30 @@ void setup() {
   lcd.backlight();
   currentScore = 0;
   bestScore = 0;
+
+  // joystick setup
+  angle = 0.0;
+  discreteAngle = 0;
 }
 
 void loop() {
   for (int i = 0; i < 168; i++)
-  { 
+  {
+    int x = analogRead(joyXPin);
+    int y = analogRead(joyYPin);
+    if ((x > 540 || x < 500) || (y > 540 || y < 500))
+    {
+      angle = atan2(x-520,y-520);
+      discreteAngle = (int)(25 - (angle + 3.14) / 6.28 * 28 + 28) % 28;
+    }
+    
     drawScore();
     currentScore += 1000000;
   
-    sendNumber(paddlePins, 5, i % 28);
+    sendNumber(paddlePins, 5, discreteAngle);
     sendNumber(posPinsX, 3, i % 6 + 1);
     sendNumber(posPinsY, 3, i % 6 + 1);
-    debugDraw(i % 28, i % 6 + 1, i % 6 + 1);
+    debugDraw(discreteAngle, i % 6 + 1, i % 6 + 1);
 
     digitalWrite(dataReadyPin, HIGH);
     delay(2);
@@ -96,8 +114,8 @@ void debugDraw(int paddle, int x, int y)
 {
   Serial.println();
   Serial.println();
-  Serial.println();
-  Serial.println();
+  Serial.println(discreteAngle);
+  Serial.println(angle);
   Serial.println();
   Serial.println("BEST   " + String(bestScore));
   Serial.println("SCORE  " + String(currentScore));
