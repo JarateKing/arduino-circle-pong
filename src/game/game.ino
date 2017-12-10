@@ -27,6 +27,9 @@ const int posPinsY[3] = {29,31,33};
 // pin for indicating data is ready to receive
 const int dataReadyPin = 5;
 
+// framerate input
+int frameCounter;
+
 void setup() {
   Serial.begin(9600);
   // setup paddle reading pins
@@ -51,33 +54,38 @@ void setup() {
   // joystick setup
   angle = 0.0;
   discreteAngle = 0;
+
+  // game setup
+  frameCounter = 0;
 }
 
 void loop() {
-  for (int i = 0; i < 168; i++)
+  int x = analogRead(joyXPin);
+  int y = analogRead(joyYPin);
+  if ((x > 540 || x < 500) || (y > 540 || y < 500))
   {
-    int x = analogRead(joyXPin);
-    int y = analogRead(joyYPin);
-    if ((x > 540 || x < 500) || (y > 540 || y < 500))
-    {
-      angle = atan2(x-520,y-520);
-      discreteAngle = (int)(25 - (angle + 3.14) / 6.28 * 28 + 28) % 28;
-    }
-    
-    drawScore();
-    currentScore += 1000000;
-  
-    sendNumber(paddlePins, 5, discreteAngle);
-    sendNumber(posPinsX, 3, i % 6 + 1);
-    sendNumber(posPinsY, 3, i % 6 + 1);
-    debugDraw(discreteAngle, i % 6 + 1, i % 6 + 1);
-
-    digitalWrite(dataReadyPin, HIGH);
-    delay(2);
-    digitalWrite(dataReadyPin, LOW);
-    delay(490);
+    angle = atan2(x-520,y-520);
+    discreteAngle = (int)(25 - (angle + 3.14) / 6.28 * 28 + 28) % 28;
   }
 
+  drawScore();
+  sendNumber(paddlePins, 5, discreteAngle);
+  sendNumber(posPinsX, 3, 1);
+  sendNumber(posPinsY, 3, 1);
+  
+  digitalWrite(dataReadyPin, HIGH);
+  delay(2);
+  digitalWrite(dataReadyPin, LOW);
+
+  frameCounter++;
+  if (frameCounter > 20)
+  {
+    frameCounter = 0;
+    currentScore += 100;
+    debugDraw(discreteAngle, 1, 1);
+  }
+
+  delay(5);
 }
 
 void drawScore()
