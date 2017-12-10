@@ -95,14 +95,14 @@ void drawScore()
   if (bestScore == 0)
     lcd.setCursor(15,0);
   else
-    lcd.setCursor(16 - floor(log10(bestScore))+1,0);
+    lcd.setCursor(16 - floor(log10(bestScore))-1,0);
   lcd.print(bestScore);
   lcd.setCursor(0,1);
   lcd.print("SCORE");
   if (currentScore == 0)
     lcd.setCursor(15,1);
   else
-    lcd.setCursor(16 - floor(log10(currentScore))+1,1);
+    lcd.setCursor(16 - floor(log10(currentScore))-1,1);
   lcd.print(currentScore);
 }
 
