@@ -65,6 +65,7 @@ void setup() {
 
   ballx = 3;
   bally = 3;
+  balldir = 0;
 }
 
 void loop() {
@@ -91,8 +92,47 @@ void loop() {
   {
     frameCounter = 0;
 
-    ballx = ballx % 6 + 1;
-    bally = bally % 6 + 1;
+    if (ballx == 1 || bally == 1 || ballx == 6 || bally == 6)
+    {
+      balldir = (balldir + 4) % 8;
+    }
+
+    if (balldir == 0)
+    {
+      ballx++;
+    }
+    else if (balldir == 1)
+    {
+      ballx++;
+      bally++;
+    }
+    else if (balldir == 2)
+    {
+      bally++;
+    }
+    else if (balldir == 3)
+    {
+      ballx--;
+      bally++;
+    }
+    else if (balldir == 4)
+    {
+      ballx--;
+    }
+    else if (balldir == 5)
+    {
+      ballx--;
+      bally--;
+    }
+    else if (balldir == 6)
+    {
+      bally--;
+    }
+    else if (balldir == 7)
+    {
+      ballx++;
+      bally--;
+    }
     
     debugDraw(discreteAngle, ballx, bally);
   }
