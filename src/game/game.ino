@@ -38,6 +38,9 @@ int balldir;
 // random noise pin
 const int randomNoisePin = A0;
 
+// restart button
+const int restartPin = 3;
+
 void setup() {
   Serial.begin(9600);
   // setup paddle reading pins
@@ -56,7 +59,6 @@ void setup() {
   // scoreboard setup
   lcd.init();
   lcd.backlight();
-  currentScore = 0;
   bestScore = 0;
 
   // joystick setup
@@ -64,14 +66,21 @@ void setup() {
   discreteAngle = 0;
 
   // game setup
+  gameStart();
+
+  // rng setup
+  randomSeed(analogRead(randomNoisePin));
+}
+
+void gameStart()
+{
+  currentScore = 0;
+  
   frameCounter = 0;
 
   ballx = 3;
   bally = 3;
   balldir = 0;
-
-  // rng setup
-  randomSeed(analogRead(randomNoisePin));
 }
 
 void loop() {
@@ -81,6 +90,11 @@ void loop() {
   {
     angle = atan2(x-520,y-520);
     discreteAngle = (int)(25 - (angle + 3.14) / 6.28 * 28 + 28) % 28;
+  }
+
+  if (digitalRead(restartPin))
+  {
+    gameStart();
   }
 
   drawScore();
