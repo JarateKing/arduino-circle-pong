@@ -112,9 +112,37 @@ void loop() {
   {
     frameCounter = 0;
 
-    if (ballx == 1 || bally == 1 || ballx == 6 || bally == 6)
+    if ((ballx == 1 || bally == 1) && (ballx <= 2 && bally <= 2))
     {
-      balldir = (balldir + random(3,5)) % 8;
+      balldir = (1 + random(-1,1) + 8) % 8;
+    }
+    else if ((ballx == 6 || bally == 1) && (ballx >= 5 && bally <= 2))
+    {
+      balldir = (3 + random(-1,1) + 8) % 8;
+    }
+    else if ((ballx == 6 || bally == 6) && (ballx >= 5 && bally >= 5))
+    {
+      balldir = (5 + random(-1,1) + 8) % 8;
+    }
+    else if ((ballx == 1 || bally == 6) && (ballx <= 2 && bally >= 5))
+    {
+      balldir = (7 + random(-1,1) + 8) % 8;
+    }
+    else if (ballx == 1)
+    {
+      balldir = (0 + random(-1,1) + 8) % 8;
+    }
+    else if (bally == 1)
+    {
+      balldir = (2 + random(-1,1) + 8) % 8;
+    }
+    else if (ballx == 6)
+    {
+      balldir = (4 + random(-1,1) + 8) % 8;
+    }
+    else if (bally == 6)
+    {
+      balldir = (6 + random(-1,1) + 8) % 8;
     }
 
     if (balldir == 0)
