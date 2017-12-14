@@ -97,112 +97,114 @@ void loop() {
   {
     gameStart();
   }
-
-  drawScore();
-  sendNumber(paddlePins, 5, discreteAngle);
-  sendNumber(posPinsX, ballx, 1);
-  sendNumber(posPinsY, bally, 1);
-  
-  digitalWrite(dataReadyPin, HIGH);
-  delay(2);
-  digitalWrite(dataReadyPin, LOW);
-
-  // perform updates
-  frameCounter++;
-  if (frameCounter > 20)
+  else
   {
-    frameCounter = 0;
-
-    if ((ballx == 1 && bally == 1) && (discreteAngle <= 2 || discreteAngle >= 26))
-    {
-      balldir = (1 + random(-1,1) + 8) % 8;
-      currentScore++;
-    }
-    else if ((ballx == 6 && bally == 1) && (discreteAngle >= 5 && discreteAngle <= 9))
-    {
-      balldir = (3 + random(-1,1) + 8) % 8;
-      currentScore++;
-    }
-    else if ((ballx == 6 && bally == 6) && (discreteAngle >= 12 && discreteAngle <= 16))
-    {
-      balldir = (5 + random(-1,1) + 8) % 8;
-      currentScore++;
-    }
-    else if ((ballx == 1 && bally == 6) && (discreteAngle >= 19 && discreteAngle <= 23))
-    {
-      balldir = (7 + random(-1,1) + 8) % 8;
-      currentScore++;
-    }
-    else if (ballx == 1 && ((discreteAngle >= 28 - bally - 2 && discreteAngle <= 28 - bally + 2)
-                            || (discreteAngle == 0 && bally == 2)))
-    {
-      balldir = (0 + random(-1,1) + 8) % 8;
-      currentScore++;
-    }
-    else if (bally == 1 && (discreteAngle >= ballx - 2 && discreteAngle <= ballx + 2))
-    {
-      balldir = (2 + random(-1,1) + 8) % 8;
-      currentScore++;
-    }
-    else if (ballx == 6 && (discreteAngle >= 7 + bally - 2 && discreteAngle <= 7 + bally + 2))
-    {
-      balldir = (4 + random(-1,1) + 8) % 8;
-      currentScore++;
-    }
-    else if (bally == 6 && (discreteAngle >= 21 - ballx - 2 && discreteAngle <= 21 - ballx + 2))
-    {
-      balldir = (6 + random(-1,1) + 8) % 8;
-      currentScore++;
-    }
-    else if (ballx == 1 || bally == 1 || ballx == 6 || bally == 6)
-    {
-      delay(5);
-      Serial.println("x:" + String(ballx));
-      Serial.println("y:" + String(bally));
-      saveScore();
-      delay(2000);
-      gameStart();
-    }
+    drawScore();
+    sendNumber(paddlePins, 5, discreteAngle);
+    sendNumber(posPinsX, ballx, 1);
+    sendNumber(posPinsY, bally, 1);
     
-
-    if (balldir == 0)
+    digitalWrite(dataReadyPin, HIGH);
+    delay(2);
+    digitalWrite(dataReadyPin, LOW);
+  
+    // perform updates
+    frameCounter++;
+    if (frameCounter > 20)
     {
-      ballx++;
+      frameCounter = 0;
+  
+      if ((ballx == 1 && bally == 1) && (discreteAngle <= 2 || discreteAngle >= 26))
+      {
+        balldir = (1 + random(-1,1) + 8) % 8;
+        currentScore++;
+      }
+      else if ((ballx == 6 && bally == 1) && (discreteAngle >= 5 && discreteAngle <= 9))
+      {
+        balldir = (3 + random(-1,1) + 8) % 8;
+        currentScore++;
+      }
+      else if ((ballx == 6 && bally == 6) && (discreteAngle >= 12 && discreteAngle <= 16))
+      {
+        balldir = (5 + random(-1,1) + 8) % 8;
+        currentScore++;
+      }
+      else if ((ballx == 1 && bally == 6) && (discreteAngle >= 19 && discreteAngle <= 23))
+      {
+        balldir = (7 + random(-1,1) + 8) % 8;
+        currentScore++;
+      }
+      else if (ballx == 1 && ((discreteAngle >= 28 - bally - 2 && discreteAngle <= 28 - bally + 2)
+                              || (discreteAngle == 0 && bally == 2)))
+      {
+        balldir = (0 + random(-1,1) + 8) % 8;
+        currentScore++;
+      }
+      else if (bally == 1 && (discreteAngle >= ballx - 2 && discreteAngle <= ballx + 2))
+      {
+        balldir = (2 + random(-1,1) + 8) % 8;
+        currentScore++;
+      }
+      else if (ballx == 6 && (discreteAngle >= 7 + bally - 2 && discreteAngle <= 7 + bally + 2))
+      {
+        balldir = (4 + random(-1,1) + 8) % 8;
+        currentScore++;
+      }
+      else if (bally == 6 && (discreteAngle >= 21 - ballx - 2 && discreteAngle <= 21 - ballx + 2))
+      {
+        balldir = (6 + random(-1,1) + 8) % 8;
+        currentScore++;
+      }
+      else if (ballx == 1 || bally == 1 || ballx == 6 || bally == 6)
+      {
+        delay(5);
+        Serial.println("x:" + String(ballx));
+        Serial.println("y:" + String(bally));
+        saveScore();
+        delay(2000);
+        gameStart();
+      }
+      
+  
+      if (balldir == 0)
+      {
+        ballx++;
+      }
+      else if (balldir == 1)
+      {
+        ballx++;
+        bally++;
+      }
+      else if (balldir == 2)
+      {
+        bally++;
+      }
+      else if (balldir == 3)
+      {
+        ballx--;
+        bally++;
+      }
+      else if (balldir == 4)
+      {
+        ballx--;
+      }
+      else if (balldir == 5)
+      {
+        ballx--;
+        bally--;
+      }
+      else if (balldir == 6)
+      {
+        bally--;
+      }
+      else if (balldir == 7)
+      {
+        ballx++;
+        bally--;
+      }
+      
+      debugDraw(discreteAngle, ballx, bally);
     }
-    else if (balldir == 1)
-    {
-      ballx++;
-      bally++;
-    }
-    else if (balldir == 2)
-    {
-      bally++;
-    }
-    else if (balldir == 3)
-    {
-      ballx--;
-      bally++;
-    }
-    else if (balldir == 4)
-    {
-      ballx--;
-    }
-    else if (balldir == 5)
-    {
-      ballx--;
-      bally--;
-    }
-    else if (balldir == 6)
-    {
-      bally--;
-    }
-    else if (balldir == 7)
-    {
-      ballx++;
-      bally--;
-    }
-    
-    debugDraw(discreteAngle, ballx, bally);
   }
 
   delay(5);
