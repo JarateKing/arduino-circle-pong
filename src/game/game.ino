@@ -115,41 +115,50 @@ void loop() {
     if ((ballx == 1 && bally == 1) && (discreteAngle <= 2 || discreteAngle >= 26))
     {
       balldir = (1 + random(-1,1) + 8) % 8;
+      currentScore++;
     }
     else if ((ballx == 6 && bally == 1) && (discreteAngle >= 5 && discreteAngle <= 9))
     {
       balldir = (3 + random(-1,1) + 8) % 8;
+      currentScore++;
     }
     else if ((ballx == 6 && bally == 6) && (discreteAngle >= 12 && discreteAngle <= 16))
     {
       balldir = (5 + random(-1,1) + 8) % 8;
+      currentScore++;
     }
     else if ((ballx == 1 && bally == 6) && (discreteAngle >= 19 && discreteAngle <= 23))
     {
       balldir = (7 + random(-1,1) + 8) % 8;
+      currentScore++;
     }
     else if (ballx == 1 && ((discreteAngle >= 28 - bally - 2 && discreteAngle <= 28 - bally + 2)
                             || (discreteAngle == 0 && bally == 2)))
     {
       balldir = (0 + random(-1,1) + 8) % 8;
+      currentScore++;
     }
     else if (bally == 1 && (discreteAngle >= ballx - 2 && discreteAngle <= ballx + 2))
     {
       balldir = (2 + random(-1,1) + 8) % 8;
+      currentScore++;
     }
     else if (ballx == 6 && (discreteAngle >= 7 + bally - 2 && discreteAngle <= 7 + bally + 2))
     {
       balldir = (4 + random(-1,1) + 8) % 8;
+      currentScore++;
     }
     else if (bally == 6 && (discreteAngle >= 21 - ballx - 2 && discreteAngle <= 21 - ballx + 2))
     {
       balldir = (6 + random(-1,1) + 8) % 8;
+      currentScore++;
     }
     else if (ballx == 1 || bally == 1 || ballx == 6 || bally == 6)
     {
       delay(5);
       Serial.println("x:" + String(ballx));
       Serial.println("y:" + String(bally));
+      saveScore();
       delay(2000);
       gameStart();
     }
@@ -196,6 +205,14 @@ void loop() {
   }
 
   delay(5);
+}
+
+void saveScore()
+{
+  if (currentScore > bestScore)
+  {
+    // TODO: implement this part
+  }
 }
 
 void drawScore()
