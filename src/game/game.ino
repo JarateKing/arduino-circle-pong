@@ -74,6 +74,7 @@ void setup() {
 
 void gameStart()
 {
+  clearScore();
   currentScore = 0;
   
   frameCounter = 0;
@@ -231,6 +232,14 @@ void drawScore()
   else
     lcd.setCursor(16 - floor(log10(currentScore))-1,1);
   lcd.print(currentScore);
+}
+
+void clearScore()
+{
+  lcd.setCursor(0,0);
+  lcd.print("                ");
+  lcd.setCursor(0,1);
+  lcd.print("                ");
 }
 
 void sendNumber(int pins[], int pinSize, int num)
