@@ -35,6 +35,9 @@ int ballx;
 int bally;
 int balldir;
 
+// random noise pin
+const int randomNoisePin = A0;
+
 void setup() {
   Serial.begin(9600);
   // setup paddle reading pins
@@ -66,6 +69,9 @@ void setup() {
   ballx = 3;
   bally = 3;
   balldir = 0;
+
+  // rng setup
+  randomSeed(analogRead(randomNoisePin));
 }
 
 void loop() {
@@ -94,7 +100,7 @@ void loop() {
 
     if (ballx == 1 || bally == 1 || ballx == 6 || bally == 6)
     {
-      balldir = (balldir + 4) % 8;
+      balldir = (balldir + random(3,5)) % 8;
     }
 
     if (balldir == 0)
