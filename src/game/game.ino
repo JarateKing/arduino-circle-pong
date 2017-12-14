@@ -30,6 +30,11 @@ const int dataReadyPin = 5;
 // framerate input
 int frameCounter;
 
+// ball position
+int ballx;
+int bally;
+int balldir;
+
 void setup() {
   Serial.begin(9600);
   // setup paddle reading pins
@@ -57,6 +62,9 @@ void setup() {
 
   // game setup
   frameCounter = 0;
+
+  ballx = 3;
+  bally = 3;
 }
 
 void loop() {
@@ -70,19 +78,23 @@ void loop() {
 
   drawScore();
   sendNumber(paddlePins, 5, discreteAngle);
-  sendNumber(posPinsX, 3, 1);
-  sendNumber(posPinsY, 3, 1);
+  sendNumber(posPinsX, ballx, 1);
+  sendNumber(posPinsY, bally, 1);
   
   digitalWrite(dataReadyPin, HIGH);
   delay(2);
   digitalWrite(dataReadyPin, LOW);
 
+  // perform updates
   frameCounter++;
   if (frameCounter > 20)
   {
     frameCounter = 0;
-    currentScore += 100;
-    debugDraw(discreteAngle, 1, 1);
+
+    ballx = ballx % 6 + 1;
+    bally = bally % 6 + 1;
+    
+    debugDraw(discreteAngle, ballx, bally);
   }
 
   delay(5);
