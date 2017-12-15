@@ -2,8 +2,7 @@
 
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
-
-LiquidCrystal_I2C lcd(0x38, 16, 2);
+#include <SoftwareSerial.h>
 
 // Debug Mode Define
 #define DEBUG 1
@@ -15,6 +14,8 @@ LiquidCrystal_I2C lcd(0x38, 16, 2);
 #define RESTART 3
 #define DATA_READY 5
 #define RND_NOISE A0
+#define SND_RX 8
+#define SND_TX 7
 // Also not usable:
 // SDA = 20, SCL = 21
 
@@ -32,6 +33,40 @@ LiquidCrystal_I2C lcd(0x38, 16, 2);
 
 // Drawing Constants
 #define FRAME_DELAY 20
+
+// Component Drivers
+
+LiquidCrystal_I2C lcd(0x38, 16, 2);
+SoftwareSerial mp3(SND_RX, SND_TX);
+
+// MP3 Controls
+static int8_t Send_buf[6] = {0};
+#define CMD_PLAY  0X01
+#define CMD_PAUSE 0X02
+#define CMD_NEXT_SONG 0X03
+#define CMD_PREV_SONG 0X04
+#define CMD_VOLUME_UP   0X05
+#define CMD_VOLUME_DOWN 0X06
+#define CMD_FORWARD 0X0A
+#define CMD_REWIND  0X0B
+#define CMD_STOP 0X0E
+#define CMD_STOP_INJECT 0X0F
+#define CMD_SEL_DEV 0X35
+#define DEV_TF 0X01
+#define CMD_IC_MODE 0X35
+#define CMD_SLEEP   0X03
+#define CMD_WAKE_UP 0X02
+#define CMD_RESET   0X05
+#define CMD_PLAY_W_INDEX   0X41
+#define CMD_PLAY_FILE_NAME 0X42
+#define CMD_INJECT_W_INDEX 0X43
+#define CMD_SET_VOLUME 0X31
+#define CMD_PLAY_W_VOL 0X31
+#define CMD_SET_PLAY_MODE 0X33
+#define ALL_CYCLE 0X00
+#define SINGLE_CYCLE 0X01
+#define CMD_PLAY_COMBINE 0X45
+void sendCommand(int8_t command, int16_t dat );
 
 // Math Defines
 
@@ -95,6 +130,12 @@ void setup() {
 
   // rng setup
   randomSeed(analogRead(RND_NOISE));
+
+  // audio setup
+  mp3.begin(9600);
+  delay(500);
+  sendCommand(CMD_SEL_DEV, DEV_TF);
+  delay(500);
 }
 
 void gameStart()
@@ -110,6 +151,12 @@ void gameStart()
   ballx = 3;
   bally = 3;
   balldir = 0;
+
+  // start sound
+  playWithFolderAndVolume(0x0304, 0x02); // play folder 3 sound 4 volume 8
+  delay(7000); // wait long enough for that to finish
+  sendCommand(CMD_SEL_DEV, DEV_TF);
+  delay(500);
 }
 
 void loop() {
@@ -367,5 +414,109 @@ void debugDraw(int paddle, int x, int y)
     }
     Serial.println();
   #endif
+}
+
+void setVolume(int8_t vol)
+{
+  mp3_5bytes(CMD_SET_VOLUME, vol);
+}
+
+void playWithFolderAndVolume(int16_t dat, int8_t vol)
+{
+  // dat represents the command portion after Play with Folder and Filename
+  setVolume(vol); // call helper method, above
+  mp3_6bytes(CMD_PLAY_FILE_NAME, dat); // play as directed
+}
+
+void playWithVolume(int16_t dat)
+{
+  mp3_6bytes(CMD_PLAY_W_VOL, dat);
+}
+
+/*cycle play with an index*/
+void cyclePlay(int16_t index)
+{
+  mp3_6bytes(CMD_SET_PLAY_MODE,index);
+}
+
+void setCyleMode(int8_t AllSingle)
+{
+  mp3_5bytes(CMD_SET_PLAY_MODE,AllSingle);
+}
+
+
+void playCombine(int8_t song[][2], int8_t number)
+{
+  if(number > 15) return;//number of songs combined can not be more than 15
+  uint8_t nbytes;//the number of bytes of the command with starting byte and ending byte
+  nbytes = 2*number + 4;
+  int8_t Send_buf[nbytes];
+  Send_buf[0] = 0x7e; //starting byte
+  Send_buf[1] = nbytes - 2; //the number of bytes of the command without starting byte and ending byte
+  Send_buf[2] = CMD_PLAY_COMBINE; 
+  for(uint8_t i=0; i < number; i++)//
+  {
+    Send_buf[i*2+3] = song[i][0];
+  Send_buf[i*2+4] = song[i][1];
+  }
+  Send_buf[nbytes - 1] = 0xef;
+  sendBytes(nbytes);
+}
+
+
+void sendCommand(int8_t command, int16_t dat = 0)
+{
+  delay(20);
+  if((command == CMD_PLAY_W_VOL)||(command == CMD_SET_PLAY_MODE)||(command == CMD_PLAY_COMBINE))
+    return;
+  else if(command < 0x10) 
+  {
+  mp3Basic(command);
+  }
+  else if(command < 0x40)
+  { 
+  mp3_5bytes(command, dat);
+  }
+  else if(command < 0x50)
+  { 
+  mp3_6bytes(command, dat);
+  }
+  else return;
+ 
+}
+
+void mp3Basic(int8_t command)
+{
+  Send_buf[0] = 0x7e; //starting byte
+  Send_buf[1] = 0x02; //the number of bytes of the command without starting byte and ending byte
+  Send_buf[2] = command; 
+  Send_buf[3] = 0xef; //
+  sendBytes(4);
+}
+void mp3_5bytes(int8_t command, uint8_t dat)
+{
+  Send_buf[0] = 0x7e; //starting byte
+  Send_buf[1] = 0x03; //the number of bytes of the command without starting byte and ending byte
+  Send_buf[2] = command; 
+  Send_buf[3] = dat; //
+  Send_buf[4] = 0xef; //
+  sendBytes(5);
+}
+void mp3_6bytes(int8_t command, int16_t dat)
+{
+  Send_buf[0] = 0x7e; //starting byte
+  Send_buf[1] = 0x04; //the number of bytes of the command without starting byte and ending byte
+  Send_buf[2] = command; 
+  Send_buf[3] = (int8_t)(dat >> 8);//data high-order byte (shifted)
+  Send_buf[4] = (int8_t)(dat); //data low-order byte
+  Send_buf[5] = 0xef; //
+  sendBytes(6);
+}
+void sendBytes(uint8_t nbytes)
+{
+  for(uint8_t i=0; i < nbytes; i++)//
+  {
+    mp3.write(Send_buf[i]) ;
+  }
 }
 
