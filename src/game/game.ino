@@ -33,7 +33,8 @@
 #define Y_IN_MIN 500
 
 // Drawing Constants
-#define FRAME_DELAY 20
+#define FRAME_COUNT 20
+#define FRAME_DELAY 10
 
 // MP3 Controls
 #define SND_START 0x0105
@@ -51,6 +52,10 @@
 #define DUR_HIT 96
 #define TONE_MISS 490
 #define DUR_MISS 257
+
+// Modes
+#define GAME_MODE_PLAY 0
+#define GAME_MODE_WAIT 1
 
 // MP3 Defines
 #define CMD_PLAY  0X01
@@ -111,6 +116,7 @@ int frameCounter;
 int ballx;
 int bally;
 int balldir;
+int mode;
 
 void setup() {
   #if DEBUG > 0
@@ -137,14 +143,8 @@ void setup() {
   lcd.init();
   lcd.backlight();
   bestScore = 0;
-
-  // joystick setup
-  angle = 0.0;
-  discreteAngle = 0;
-
-  // rng setup
-  randomSeed(analogRead(RND_NOISE));
-
+  drawHighScore();
+  
   // MP3 uses serial1
   // audio setup
   Serial1.begin(9600);
@@ -153,28 +153,15 @@ void setup() {
   delay(500);
   setVolume(SND_VOLUME);
 
+  // joystick setup
+  angle = 0.0;
+  discreteAngle = 0;
+
+  // rng setup
+  randomSeed(analogRead(RND_NOISE));
+
   // game setup
   gameStart();
-}
-
-void gameStart()
-{
-  if (currentScore > bestScore)
-    bestScore = currentScore;
-  
-  // start sound
-  playWithFolder(SND_START);
-  
-  clearScore();
-  currentScore = 0;
-  
-  frameCounter = 0;
-
-  ballx = 3;
-  bally = 3;
-  balldir = 0;
-  
-  delay(500);
 }
 
 void loop() {
@@ -194,7 +181,6 @@ void loop() {
   }
   else
   {
-    drawScore();
     sendNumber(paddlePins, 5, discreteAngle);
     sendNumber(posPinsX, 3, ballx);
     sendNumber(posPinsY, 3, bally);
@@ -205,7 +191,7 @@ void loop() {
   
     // perform updates
     frameCounter++;
-    if (frameCounter > FRAME_DELAY)
+    if (frameCounter > FRAME_COUNT)
     {
       frameCounter = 0;
 
@@ -213,56 +199,53 @@ void loop() {
       // each corner & each side has their own opposing angle, that will have variance added on
       if ((ballx == 1 && bally == 1) && (discreteAngle <= 2 || discreteAngle >= 26))
       {
+        hit();
         balldir = nextDirection(1);
-        currentScore++;
       }
       else if ((ballx == 6 && bally == 1) && (discreteAngle >= 5 && discreteAngle <= 9))
       {
+        hit();
         balldir = nextDirection(3);
-        currentScore++;
       }
       else if ((ballx == 6 && bally == 6) && (discreteAngle >= 12 && discreteAngle <= 16))
       {
+        hit();
         balldir = nextDirection(5);
-        currentScore++;
       }
       else if ((ballx == 1 && bally == 6) && (discreteAngle >= 19 && discreteAngle <= 23))
       {
+        hit();
         balldir = nextDirection(7);
-        currentScore++;
       }
       else if (ballx == 1 && ((discreteAngle >= 28 - bally - 2 && discreteAngle <= 28 - bally + 2)
                               || (discreteAngle == 0 && bally == 2)))
       {
+        hit();
         balldir = nextDirection(0);
-        currentScore++;
       }
       else if (bally == 1 && (discreteAngle >= ballx - 2 && discreteAngle <= ballx + 2))
       {
+        hit();
         balldir = nextDirection(2);
-        currentScore++;
       }
       else if (ballx == 6 && (discreteAngle >= 7 + bally - 2 && discreteAngle <= 7 + bally + 2))
       {
+        hit();
         balldir = nextDirection(4);
-        currentScore++;
       }
       else if (bally == 6 && (discreteAngle >= 21 - ballx - 2 && discreteAngle <= 21 - ballx + 2))
       {
-        balldir = nextDirection(6); //(6 + random(-1,1) + 8) % 8;
-        currentScore++;
+        hit();
+        balldir = nextDirection(6);
       }
       else if (ballx == 1 || bally == 1 || ballx == 6 || bally == 6)
       {
-        tone(TONE_PIN, TONE_MISS);
-        delay(DUR_MISS);
-        noTone(TONE_PIN);
+        miss();
         
         if (currentScore > bestScore)
-          playWithFolder(SND_HIGHSCORE);
+          highscore();
         else
-          playWithFolder(SND_LOSE);
-        delay(2000);
+          loss();
         
         // Preprocessor commands for safety
         #if DEBUG > 0
@@ -310,37 +293,106 @@ void loop() {
     }
   }
 
-  delay(5);
+  delay(FRAME_DELAY);
 }
 
 // determine the ball's direction, with variance
 // given the "perfect" direction for where it hit as its input
 inline int nextDirection(int in)
 {
+  return (in + random(-1,2) + 8) % 8;
+}
+
+// Play hit tone
+inline void hit() {
   //playWithFolder(SND_HIT);
   //delay(100);
   tone(TONE_PIN, TONE_HIT);
   delay(DUR_HIT);
   noTone(TONE_PIN);
-  
-  return (in + random(-1,2) + 8) % 8;
+  currentScore++;
+  drawScore();
 }
 
-// Can this be split into two methods to improve performance?
-// (The high score only needs to be updated sometimes.)
-void drawScore()
+// Play miss tone
+inline void miss() {
+  tone(TONE_PIN, TONE_MISS);
+  delay(DUR_MISS);
+  noTone(TONE_PIN);
+}
+
+// Register high score
+inline void highscore() {
+  playWithFolder(SND_HIGHSCORE);
+  clearHighScore();
+  bestScore = currentScore;
+  drawHighScore();
+  delay(2000);
+}
+
+// Register loss
+inline void loss() {
+  playWithFolder(SND_LOSE);
+  delay(1000);
+}
+
+// Start new game
+void gameStart()
+{
+  // start sound
+  playWithFolder(SND_START);
+  
+  clearScore();
+  currentScore = 0;
+  drawScore();
+  
+  frameCounter = 0;
+
+  ballx = 3;
+  bally = 3;
+  balldir = 0;
+
+  mode = GAME_MODE_PLAY;
+  
+  delay(500);
+}
+// LCD methods
+
+// Clear the player score
+void clearScore()
+{
+  lcd.setCursor(0,1);
+  lcd.print(F("                "));
+}
+
+// Clear the high score
+void clearHighScore()
 {
   lcd.setCursor(0,0);
-  //  F("some string literal") is a provided macro that moves strings to flash memory,
-  //  which helps if memory becomes a problem.
-  lcd.print(F("BEST"));
-  drawNumberOn(bestScore, 0);
-  
+  lcd.print(F("                "));
+}
+
+// Draw the player score
+void drawScore()
+{
   lcd.setCursor(0,1);
-  //  F("some string literal") is a provided macro that moves strings to flash memory,
-  //  which helps if memory becomes a problem.
   lcd.print(F("SCORE"));
   drawNumberOn(currentScore, 1);
+}
+
+// Draw the high score
+void drawHighScore()
+{
+  lcd.setCursor(0,0);
+  lcd.print(F("BEST"));
+  drawNumberOn(bestScore, 0);
+}
+
+// Draw the waiting message
+void drawWaiting()
+{
+  lcd.setCursor(0,1);
+  lcd.print(F("Press start now!"));
 }
 
 inline void drawNumberOn(long number, int row)
@@ -350,16 +402,6 @@ inline void drawNumberOn(long number, int row)
   String asString = String(number);
   lcd.setCursor(16 - asString.length(),row);
   lcd.print(asString);
-}
-
-void clearScore()
-{
-  //  F("some string literal") is a provided macro that moves strings to flash memory,
-  //  which helps if memory becomes a problem.
-  lcd.setCursor(0,0);
-  lcd.print(F("                "));
-  lcd.setCursor(0,1);
-  lcd.print(F("                "));
 }
 
 void sendNumber(int pins[], int pinSize, int num)
