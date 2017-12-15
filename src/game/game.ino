@@ -2,7 +2,7 @@
 
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
-#include <SoftwareSerial.h>
+//#include <SoftwareSerial.h>
 
 // Debug Mode Define
 #define DEBUG 1
@@ -14,8 +14,9 @@
 #define RESTART 3
 #define DATA_READY 5
 #define RND_NOISE A0
-#define SND_RX 8
-#define SND_TX 7
+#define SND_TX 18
+#define SND_RX 19
+#define TONE_PIN 9
 // Also not usable:
 // SDA = 20, SCL = 21
 
@@ -34,18 +35,24 @@
 // Drawing Constants
 #define FRAME_DELAY 20
 
-// Component Drivers
-
-LiquidCrystal_I2C lcd(0x38, 16, 2);
-SoftwareSerial mp3(SND_RX, SND_TX);
-
 // MP3 Controls
-#define SND_START 0x0304
-#define SND_HIT 0x0304
-#define SND_LOSE 0x0304
-#define SND_HIGHSCORE 0x0304
+#define SND_START 0x0105
+#define SND_HIT 0x0101
+#define SND_MISS 0x0102
+#define SND_HIGHSCORE 0x0103
+#define SND_LOSE 0x0104
 
-static int8_t Send_buf[6] = {0};
+#define SND_VOLUME 0x08
+
+// Tones
+#define TONE_WALL 226
+#define DUR_WALL 16
+#define TONE_HIT 459
+#define DUR_HIT 96
+#define TONE_MISS 490
+#define DUR_MISS 257
+
+// MP3 Defines
 #define CMD_PLAY  0X01
 #define CMD_PAUSE 0X02
 #define CMD_NEXT_SONG 0X03
@@ -71,7 +78,12 @@ static int8_t Send_buf[6] = {0};
 #define ALL_CYCLE 0X00
 #define SINGLE_CYCLE 0X01
 #define CMD_PLAY_COMBINE 0X45
+static int8_t Send_buf[6] = {0};
 void sendCommand(int8_t command, int16_t dat );
+
+// Component Drivers
+LiquidCrystal_I2C lcd(0x38, 16, 2);
+//SoftwareSerial mp3(SND_RX, SND_TX);
 
 // Math Defines
 
@@ -130,23 +142,28 @@ void setup() {
   angle = 0.0;
   discreteAngle = 0;
 
-  // game setup
-  gameStart();
-
   // rng setup
   randomSeed(analogRead(RND_NOISE));
 
+  // MP3 uses serial1
   // audio setup
-  mp3.begin(9600);
+  Serial1.begin(9600);
   delay(500);
   sendCommand(CMD_SEL_DEV, DEV_TF);
   delay(500);
+  setVolume(SND_VOLUME);
+
+  // game setup
+  gameStart();
 }
 
 void gameStart()
 {
   if (currentScore > bestScore)
     bestScore = currentScore;
+  
+  // start sound
+  playWithFolder(SND_START);
   
   clearScore();
   currentScore = 0;
@@ -156,11 +173,8 @@ void gameStart()
   ballx = 3;
   bally = 3;
   balldir = 0;
-
-  // start sound
-  playWithFolderAndVolume(SND_START, 0x01);
-  delay(1000);
-  sendCommand(CMD_SEL_DEV, DEV_TF);
+  
+  delay(500);
 }
 
 void loop() {
@@ -240,15 +254,15 @@ void loop() {
       }
       else if (ballx == 1 || bally == 1 || ballx == 6 || bally == 6)
       {
-        delay(5);
-
-        if (currentScore > bestScore)
-          playWithFolderAndVolume(SND_HIGHSCORE, 0x01);
-        else
-          playWithFolderAndVolume(SND_LOSE, 0x01);
+        tone(TONE_PIN, TONE_MISS);
+        delay(DUR_MISS);
+        noTone(TONE_PIN);
         
-        delay(1000);
-        sendCommand(CMD_SEL_DEV, DEV_TF);
+        if (currentScore > bestScore)
+          playWithFolder(SND_HIGHSCORE);
+        else
+          playWithFolder(SND_LOSE);
+        delay(2000);
         
         // Preprocessor commands for safety
         #if DEBUG > 0
@@ -256,7 +270,6 @@ void loop() {
           Serial.println("y:" + String(bally));
         #endif
         
-        delay(1000);
         gameStart();
       }
       
@@ -304,9 +317,11 @@ void loop() {
 // given the "perfect" direction for where it hit as its input
 inline int nextDirection(int in)
 {
-  playWithFolderAndVolume(SND_HIT, 0x01);
-  delay(1000);
-  sendCommand(CMD_SEL_DEV, DEV_TF);
+  //playWithFolder(SND_HIT);
+  //delay(100);
+  tone(TONE_PIN, TONE_HIT);
+  delay(DUR_HIT);
+  noTone(TONE_PIN);
   
   return (in + random(-1,2) + 8) % 8;
 }
@@ -433,6 +448,8 @@ void debugDraw(int paddle, int x, int y)
   #endif
 }
 
+// MP3 Methods
+
 void setVolume(int8_t vol)
 {
   mp3_5bytes(CMD_SET_VOLUME, vol);
@@ -443,6 +460,11 @@ void playWithFolderAndVolume(int16_t dat, int8_t vol)
   // dat represents the command portion after Play with Folder and Filename
   setVolume(vol); // call helper method, above
   mp3_6bytes(CMD_PLAY_FILE_NAME, dat); // play as directed
+}
+
+void playWithFolder(int16_t dat)
+{
+  mp3_6bytes(CMD_PLAY_FILE_NAME, dat);
 }
 
 void playWithVolume(int16_t dat)
@@ -533,7 +555,7 @@ void sendBytes(uint8_t nbytes)
 {
   for(uint8_t i=0; i < nbytes; i++)//
   {
-    mp3.write(Send_buf[i]) ;
+    Serial1.write(Send_buf[i]) ;
   }
 }
 
