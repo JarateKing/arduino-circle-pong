@@ -2,7 +2,6 @@
 
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
-#include <SD.h>
 
 LiquidCrystal_I2C lcd(0x38, 16, 2);
 
@@ -16,10 +15,7 @@ LiquidCrystal_I2C lcd(0x38, 16, 2);
 #define RESTART 3
 #define DATA_READY 5
 #define RND_NOISE A0
-#define ETH_LINE 10
-#define SD_LINE 4
 // Also not usable:
-// To verify: SD_MOSI = 11, SD_MISO = 12, SD_CLK = 13
 // SDA = 20, SCL = 21
 
 // Array Constants
@@ -42,9 +38,6 @@ LiquidCrystal_I2C lcd(0x38, 16, 2);
 // score variables
 long currentScore;
 long bestScore;
-File scoreFile;
-static String SCORE_FILE_NAME = "high_scores.sav";
-char charBuf[10];
 
 // joystick input
 float angle;
@@ -74,10 +67,6 @@ void setup() {
     Serial.begin(9600);
   #endif
   
-  // Disable the Ethernet interface
-  pinMode(ETH_LINE, OUTPUT);
-  digitalWrite(ETH_LINE, HIGH);
-  
   // setup paddle reading pins
   for (int i = 0; i < N_PADDLE_PINS; i++)
   {
@@ -95,7 +84,7 @@ void setup() {
   // scoreboard setup
   lcd.init();
   lcd.backlight();
-  bestScore = getHighScore();
+  bestScore = 0;
 
   // joystick setup
   angle = 0.0;
@@ -110,6 +99,9 @@ void setup() {
 
 void gameStart()
 {
+  if (currentScore > bestScore)
+    bestScore = currentScore;
+  
   clearScore();
   currentScore = 0;
   
@@ -203,7 +195,7 @@ void loop() {
           Serial.println("x:" + String(ballx));
           Serial.println("y:" + String(bally));
         #endif
-        saveScore();
+        
         delay(2000);
         gameStart();
       }
@@ -253,108 +245,6 @@ void loop() {
 inline int nextDirection(int in)
 {
   return (in + random(-1,2) + 8) % 8;
-}
-
-// This always overrides previous high score
-void saveScore()
-{
-  if (currentScore > bestScore)
-  {
-    #if DEBUG > 0
-      Serial.print(F("Initializing SD card communications..."));
-    #endif
-    if (!SD.begin(SD_LINE)) {
-      #if DEBUG > 0
-        Serial.println(F(" initialization failed!"));
-      #endif
-      return;
-    }
-    #if DEBUG > 0
-      Serial.println(F(" initialization done."));
-    #endif
-  
-    if (SD.exists(SCORE_FILE_NAME)) {
-      SD.remove(SCORE_FILE_NAME);
-    }
-
-    // Create a new file
-    scoreFile = SD.open(SCORE_FILE_NAME, O_CREAT | O_WRITE);
-
-    // If successful:
-    if (scoreFile) {
-      #if DEBUG > 0
-        Serial.print(F("Writing high score..."));
-      #endif
-
-      // ltoa apparently converts longs to char arrays, if it doesn't work switch to String(currentScore)
-      ltoa(currentScore,charBuf,10);
-      scoreFile.println(charBuf); // String(currentScore)
-  
-      // Close (and flush) the file
-      scoreFile.close();
-      
-      #if DEBUG > 0
-        Serial.println(F(" done."));
-      #endif
-
-      bestScore = currentScore;
-    } else {
-      // if the file didn't open, print an error:
-      #if DEBUG > 0
-        Serial.println(F("Error opening high score file."));
-      #endif
-    }
-  }
-}
-
-int getHighScore()
-{
-  #if DEBUG > 0
-    Serial.print(F("Initializing SD card communications..."));
-  #endif
-  if (!SD.begin(SD_LINE)) {
-    #if DEBUG > 0
-      Serial.println(F(" initialization failed!"));
-    #endif
-    return 0;
-  }
-  #if DEBUG > 0
-    Serial.println(F(" initialization done."));
-  #endif
-
-  // If there is no high score file, return 0
-  if (!SD.exists(SCORE_FILE_NAME)) {
-    return 0;
-  }
-
-  scoreFile = SD.open(SCORE_FILE_NAME, O_READ);
-
-  // If successful:
-  if (scoreFile) {
-    #if DEBUG > 0
-      Serial.print(F("Reading high score..."));
-    #endif
-
-    int readScore;
-    while (scoreFile.available()) {
-      // atol is a C++ function that converts strings to a long, if it doesn't work, try stol or String.toInt() (no toLong())
-      readScore = atol(scoreFile.read());//.toInt(); // This needs to be tested
-    }
-
-    // Close the file
-    scoreFile.close();
-    
-    #if DEBUG > 0
-      Serial.println(F(" done."));
-    #endif
-
-    bestScore = currentScore;
-  } else {
-    // if the file didn't open, print an error:
-    #if DEBUG > 0
-      Serial.println(F("Error opening high score file."));
-    #endif
-  }
 }
 
 // Can this be split into two methods to improve performance?
