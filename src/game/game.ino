@@ -47,9 +47,6 @@ static String SCORE_FILE_NAME = "high_scores.sav";
 char charBuf[10];
 
 // joystick input
-// Moved to defines as that is better for Arduino
-//const int joyXPin = A1;
-//const int joyYPin = A2;
 float angle;
 int discreteAngle;
 
@@ -62,10 +59,6 @@ const int paddlePins[5] = {22,24,26,28,30};
 const int posPinsX[3] = {23,25,27};
 const int posPinsY[3] = {29,31,33};
 
-// pin for indicating data is ready to receive
-// Moved to defines as that is better for Arduino
-//const int dataReadyPin = 5;
-
 // framerate input
 int frameCounter;
 
@@ -73,14 +66,6 @@ int frameCounter;
 int ballx;
 int bally;
 int balldir;
-
-// random noise pin
-// Moved to defines as that is better for Arduino
-//const int randomNoisePin = A0;
-
-// restart button
-// Moved to defines as that is better for Arduino
-//const int restartPin = 3;
 
 void setup() {
   #if DEBUG > 0
@@ -167,42 +152,42 @@ void loop() {
     {
       frameCounter = 0;
 
-      // This is difficult to parse
-      // The bounce direction code was moved to an inline method for better consistency
+      // determine where the ball hit & if the paddle is in range
+      // each corner & each side has their own opposing angle, that will have variance added on
       if ((ballx == 1 && bally == 1) && (discreteAngle <= 2 || discreteAngle >= 26))
       {
-        balldir = nextDirection(1); //(1 + random(-1,1) + 8) % 8;
+        balldir = nextDirection(1);
         currentScore++;
       }
       else if ((ballx == 6 && bally == 1) && (discreteAngle >= 5 && discreteAngle <= 9))
       {
-        balldir = nextDirection(3); //(3 + random(-1,1) + 8) % 8;
+        balldir = nextDirection(3);
         currentScore++;
       }
       else if ((ballx == 6 && bally == 6) && (discreteAngle >= 12 && discreteAngle <= 16))
       {
-        balldir = nextDirection(5); //(5 + random(-1,1) + 8) % 8;
+        balldir = nextDirection(5);
         currentScore++;
       }
       else if ((ballx == 1 && bally == 6) && (discreteAngle >= 19 && discreteAngle <= 23))
       {
-        balldir = nextDirection(7); //(7 + random(-1,1) + 8) % 8;
+        balldir = nextDirection(7);
         currentScore++;
       }
       else if (ballx == 1 && ((discreteAngle >= 28 - bally - 2 && discreteAngle <= 28 - bally + 2)
                               || (discreteAngle == 0 && bally == 2)))
       {
-        balldir = nextDirection(0); //(0 + random(-1,1) + 8) % 8;
+        balldir = nextDirection(0);
         currentScore++;
       }
       else if (bally == 1 && (discreteAngle >= ballx - 2 && discreteAngle <= ballx + 2))
       {
-        balldir = nextDirection(2); //(2 + random(-1,1) + 8) % 8;
+        balldir = nextDirection(2);
         currentScore++;
       }
       else if (ballx == 6 && (discreteAngle >= 7 + bally - 2 && discreteAngle <= 7 + bally + 2))
       {
-        balldir = nextDirection(4); //(4 + random(-1,1) + 8) % 8;
+        balldir = nextDirection(4);
         currentScore++;
       }
       else if (bally == 6 && (discreteAngle >= 21 - ballx - 2 && discreteAngle <= 21 - ballx + 2))
@@ -263,11 +248,11 @@ void loop() {
   delay(5);
 }
 
-// A slightly faster method would ignore the %8 if it can't over/under flow
+// determine the ball's direction, with variance
+// given the "perfect" direction for where it hit as its input
 inline int nextDirection(int in)
 {
-  // The output of random here is -1 or 0, was -1 to 1 intended?
-  return (in + random(-1,1) + 8) % 8;
+  return (in + random(-1,2) + 8) % 8;
 }
 
 // This always overrides previous high score
@@ -396,14 +381,6 @@ inline void drawNumberOn(long number, int row)
   String asString = String(number);
   lcd.setCursor(16 - asString.length(),row);
   lcd.print(asString);
-
-  /* Was
-    if (currentScore == 0)
-      lcd.setCursor(15,row);
-    else
-      lcd.setCursor(16 - floor(log10(number))-1,row);
-    lcd.print(number);
-   */
 }
 
 void clearScore()
@@ -418,9 +395,6 @@ void clearScore()
 
 void sendNumber(int pins[], int pinSize, int num)
 {
-  // I commented these lines out as they seem to be unused
-  //int total = num;
-  //int toSend[pinSize];
   for (int i = 0; i < pinSize; i++)
   {
     digitalWrite(pins[i], bitRead(num, i));
