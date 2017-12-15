@@ -40,6 +40,11 @@ LiquidCrystal_I2C lcd(0x38, 16, 2);
 SoftwareSerial mp3(SND_RX, SND_TX);
 
 // MP3 Controls
+#define SND_START 0x0304
+#define SND_HIT 0x0304
+#define SND_LOSE 0x0304
+#define SND_HIGHSCORE 0x0304
+
 static int8_t Send_buf[6] = {0};
 #define CMD_PLAY  0X01
 #define CMD_PAUSE 0X02
@@ -153,7 +158,7 @@ void gameStart()
   balldir = 0;
 
   // start sound
-  playWithFolderAndVolume(0x0304, 0x01);
+  playWithFolderAndVolume(SND_START, 0x01);
   delay(1000);
   sendCommand(CMD_SEL_DEV, DEV_TF);
 }
@@ -236,13 +241,22 @@ void loop() {
       else if (ballx == 1 || bally == 1 || ballx == 6 || bally == 6)
       {
         delay(5);
+
+        if (currentScore > bestScore)
+          playWithFolderAndVolume(SND_HIGHSCORE, 0x01);
+        else
+          playWithFolderAndVolume(SND_LOSE, 0x01);
+        
+        delay(1000);
+        sendCommand(CMD_SEL_DEV, DEV_TF);
+        
         // Preprocessor commands for safety
         #if DEBUG > 0
           Serial.println("x:" + String(ballx));
           Serial.println("y:" + String(bally));
         #endif
         
-        delay(2000);
+        delay(1000);
         gameStart();
       }
       
@@ -290,6 +304,10 @@ void loop() {
 // given the "perfect" direction for where it hit as its input
 inline int nextDirection(int in)
 {
+  playWithFolderAndVolume(SND_HIT, 0x01);
+  delay(1000);
+  sendCommand(CMD_SEL_DEV, DEV_TF);
+  
   return (in + random(-1,2) + 8) % 8;
 }
 
