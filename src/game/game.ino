@@ -154,8 +154,8 @@ void loop() {
   {
     drawScore();
     sendNumber(paddlePins, 5, discreteAngle);
-    sendNumber(posPinsX, ballx, 1); // Are we sure about this?
-    sendNumber(posPinsY, bally, 1);
+    sendNumber(posPinsX, 3, ballx);
+    sendNumber(posPinsY, 3, bally);
     
     digitalWrite(DATA_READY, HIGH);
     delay(2);
