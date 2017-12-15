@@ -1,3 +1,6 @@
+// Pin Defines
+#define DATA_READY 5
+
 // input pins
 // these decide where to display things
 // paddlePins is the bits for a number 0-27
@@ -28,7 +31,8 @@ const int vertiColumns[28] = {0,-1,-1,-1,-1,-1,-1,7,7,7,7,7,7,7,7,-1,-1,-1,-1,-1
 const int vertiRows[28] = {0,-1,-1,-1,-1,-1,-1,0,1,2,3,4,5,6,7,-1,-1,-1,-1,-1,-1,7,6,5,4,3,2,1};
 
 // pin for indicating data is ready to receive
-const int dataReadyPin = 5;
+// Moved to defines as that is better for Arduino
+//const int dataReadyPin = 5;
 
 
 void setup() {
@@ -49,7 +53,7 @@ void setup() {
     pinMode(posPinsX[i], INPUT);
     pinMode(posPinsY[i], INPUT);
   }
-  pinMode(dataReadyPin, INPUT);
+  pinMode(DATA_READY, INPUT);
 }
 
 int paddle = 0;
@@ -57,7 +61,7 @@ int ballx = 0;
 int bally = 0;
 
 void loop() {
-  if (digitalRead(dataReadyPin))
+  if (digitalRead(DATA_READY))
   {
     paddle = convertPins(paddlePins, 5);
     ballx = convertPins(posPinsX, 3);
