@@ -153,10 +153,9 @@ void gameStart()
   balldir = 0;
 
   // start sound
-  playWithFolderAndVolume(0x0304, 0x02); // play folder 3 sound 4 volume 8
-  delay(7000); // wait long enough for that to finish
+  playWithFolderAndVolume(0x0304, 0x01);
+  delay(1000);
   sendCommand(CMD_SEL_DEV, DEV_TF);
-  delay(500);
 }
 
 void loop() {
