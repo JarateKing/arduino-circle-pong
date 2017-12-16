@@ -37,15 +37,18 @@
 #define FRAME_DELAY 10
 
 // MP3 Controls
-#define SND_START 0x0105
 #define SND_HIT 0x0101
 #define SND_MISS 0x0102
 #define SND_HIGHSCORE 0x0103
 #define SND_LOSE 0x0104
+#define SND_START 0x0105
+#define SND_WAIT 0x0106
+#define SND_MUSIC 0x0201
+#define SND_FOLDER 0x0200
 
-#define SND_VOLUME 0x08
+#define SND_VOLUME 0x10
 
-// Tones
+// Tones, set identical to original pong game
 #define TONE_WALL 226
 #define DUR_WALL 16
 #define TONE_HIT 459
@@ -58,31 +61,42 @@
 #define GAME_MODE_WAIT 1
 
 // MP3 Defines
+/************Command byte**************************/
+/*basic commands*/
 #define CMD_PLAY  0X01
 #define CMD_PAUSE 0X02
 #define CMD_NEXT_SONG 0X03
 #define CMD_PREV_SONG 0X04
 #define CMD_VOLUME_UP   0X05
 #define CMD_VOLUME_DOWN 0X06
-#define CMD_FORWARD 0X0A
-#define CMD_REWIND  0X0B
+#define CMD_FORWARD 0X0A // >>
+#define CMD_REWIND  0X0B // <<
 #define CMD_STOP 0X0E
-#define CMD_STOP_INJECT 0X0F
+#define CMD_STOP_INJECT 0X0F//stop interruptting with a song, just stop the interlude
+  
+/*5 bytes commands*/
 #define CMD_SEL_DEV 0X35
-#define DEV_TF 0X01
+  #define DEV_TF 0X01
 #define CMD_IC_MODE 0X35
-#define CMD_SLEEP   0X03
-#define CMD_WAKE_UP 0X02
-#define CMD_RESET   0X05
+  #define CMD_SLEEP   0X03
+  #define CMD_WAKE_UP 0X02
+  #define CMD_RESET   0X05
+  
+/*6 bytes commands*/  
 #define CMD_PLAY_W_INDEX   0X41
 #define CMD_PLAY_FILE_NAME 0X42
 #define CMD_INJECT_W_INDEX 0X43
+  
+/*Special commands*/
 #define CMD_SET_VOLUME 0X31
 #define CMD_PLAY_W_VOL 0X31
+  
 #define CMD_SET_PLAY_MODE 0X33
-#define ALL_CYCLE 0X00
-#define SINGLE_CYCLE 0X01
-#define CMD_PLAY_COMBINE 0X45
+  #define ALL_CYCLE 0X00
+  #define SINGLE_CYCLE 0X01
+  
+#define CMD_PLAY_COMBINE 0X45//can play combination up to 15 songs
+
 static int8_t Send_buf[6] = {0};
 void sendCommand(int8_t command, int16_t dat );
 
@@ -152,6 +166,7 @@ void setup() {
   sendCommand(CMD_SEL_DEV, DEV_TF);
   delay(500);
   setVolume(SND_VOLUME);
+  delay(500);
 
   // joystick setup
   angle = 0.0;
@@ -161,7 +176,7 @@ void setup() {
   randomSeed(analogRead(RND_NOISE));
 
   // game setup
-  gameStart();
+  startWaiting();
 }
 
 void loop() {
@@ -195,101 +210,107 @@ void loop() {
     {
       frameCounter = 0;
 
-      // determine where the ball hit & if the paddle is in range
-      // each corner & each side has their own opposing angle, that will have variance added on
-      if ((ballx == 1 && bally == 1) && (discreteAngle <= 2 || discreteAngle >= 26))
-      {
-        hit();
-        balldir = nextDirection(1);
+      if (mode == GAME_MODE_WAIT) {
+          doWaiting();
       }
-      else if ((ballx == 6 && bally == 1) && (discreteAngle >= 5 && discreteAngle <= 9))
+      else
       {
-        hit();
-        balldir = nextDirection(3);
-      }
-      else if ((ballx == 6 && bally == 6) && (discreteAngle >= 12 && discreteAngle <= 16))
-      {
-        hit();
-        balldir = nextDirection(5);
-      }
-      else if ((ballx == 1 && bally == 6) && (discreteAngle >= 19 && discreteAngle <= 23))
-      {
-        hit();
-        balldir = nextDirection(7);
-      }
-      else if (ballx == 1 && ((discreteAngle >= 28 - bally - 2 && discreteAngle <= 28 - bally + 2)
-                              || (discreteAngle == 0 && bally == 2)))
-      {
-        hit();
-        balldir = nextDirection(0);
-      }
-      else if (bally == 1 && (discreteAngle >= ballx - 2 && discreteAngle <= ballx + 2))
-      {
-        hit();
-        balldir = nextDirection(2);
-      }
-      else if (ballx == 6 && (discreteAngle >= 7 + bally - 2 && discreteAngle <= 7 + bally + 2))
-      {
-        hit();
-        balldir = nextDirection(4);
-      }
-      else if (bally == 6 && (discreteAngle >= 21 - ballx - 2 && discreteAngle <= 21 - ballx + 2))
-      {
-        hit();
-        balldir = nextDirection(6);
-      }
-      else if (ballx == 1 || bally == 1 || ballx == 6 || bally == 6)
-      {
-        miss();
+        // Determine where the ball hit & if the paddle is in range
+        // Each corner & each side has their own opposing angle, that will have variance added on
+        if ((ballx == 1 && bally == 1) && (discreteAngle <= 2 || discreteAngle >= 26))
+        {
+          hit();
+          balldir = nextDirection(1);
+        }
+        else if ((ballx == 6 && bally == 1) && (discreteAngle >= 5 && discreteAngle <= 9))
+        {
+          hit();
+          balldir = nextDirection(3);
+        }
+        else if ((ballx == 6 && bally == 6) && (discreteAngle >= 12 && discreteAngle <= 16))
+        {
+          hit();
+          balldir = nextDirection(5);
+        }
+        else if ((ballx == 1 && bally == 6) && (discreteAngle >= 19 && discreteAngle <= 23))
+        {
+          hit();
+          balldir = nextDirection(7);
+        }
+        else if (ballx == 1 && ((discreteAngle >= 28 - bally - 2 && discreteAngle <= 28 - bally + 2)
+                                || (discreteAngle == 0 && bally == 2)))
+        {
+          hit();
+          balldir = nextDirection(0);
+        }
+        else if (bally == 1 && (discreteAngle >= ballx - 2 && discreteAngle <= ballx + 2))
+        {
+          hit();
+          balldir = nextDirection(2);
+        }
+        else if (ballx == 6 && (discreteAngle >= 7 + bally - 2 && discreteAngle <= 7 + bally + 2))
+        {
+          hit();
+          balldir = nextDirection(4);
+        }
+        else if (bally == 6 && (discreteAngle >= 21 - ballx - 2 && discreteAngle <= 21 - ballx + 2))
+        {
+          hit();
+          balldir = nextDirection(6);
+        }
+        else if (ballx == 1 || bally == 1 || ballx == 6 || bally == 6)
+        {
+          miss();
+          
+          if (currentScore > bestScore)
+            highscore();
+          else
+            loss();
+          
+          // Preprocessor commands for safety
+          #if DEBUG > 0
+            Serial.println("x:" + String(ballx));
+            Serial.println("y:" + String(bally));
+          #endif
+          
+          startWaiting();
+        }
         
-        if (currentScore > bestScore)
-          highscore();
-        else
-          loss();
+        switch (balldir) {
+          case 0:
+            ballx++;
+            break;
+          case 1:
+            ballx++;
+            bally++;
+            break;
+          case 2:
+            bally++;
+            break;
+          case 3:
+            ballx--;
+            bally++;
+            break;
+          case 4:
+            ballx--;
+            break;
+          case 5:
+            ballx--;
+            bally--;
+            break;
+          case 6:
+            bally--;
+            break;
+          case 7:
+            ballx++;
+            bally--;
+            break;
+        }
         
-        // Preprocessor commands for safety
         #if DEBUG > 0
-          Serial.println("x:" + String(ballx));
-          Serial.println("y:" + String(bally));
+          debugDraw(discreteAngle, ballx, bally);
         #endif
-        
-        gameStart();
       }
-      
-      switch (balldir) {
-        case 0:
-          ballx++;
-          break;
-        case 1:
-          ballx++;
-          bally++;
-          break;
-        case 2:
-          bally++;
-          break;
-        case 3:
-          ballx--;
-          bally++;
-          break;
-        case 4:
-          ballx--;
-          break;
-        case 5:
-          ballx--;
-          bally--;
-          break;
-        case 6:
-          bally--;
-          break;
-        case 7:
-          ballx++;
-          bally--;
-          break;
-      }
-      
-      #if DEBUG > 0
-        debugDraw(discreteAngle, ballx, bally);
-      #endif
     }
   }
 
@@ -336,9 +357,13 @@ inline void loss() {
   delay(1000);
 }
 
+// Game modes
+
 // Start new game
 void gameStart()
 {
+  if (mode == GAME_MODE_WAIT) stopWaiting();
+  
   // start sound
   playWithFolder(SND_START);
   
@@ -356,6 +381,45 @@ void gameStart()
   
   delay(500);
 }
+
+// Start waiting for a new game
+void startWaiting()
+{
+  // Start waiting music (Composed by a Mister C. Vessey....)
+  playWithFolder(SND_MUSIC);
+
+  // Tried
+  //playWithFolder(SND_MUSIC);
+  //setCyleMode(ALL_CYCLE);
+  //setCyleMode(SINGLE_CYCLE);
+  
+  clearScore();
+  currentScore = 0;
+  drawWaiting();
+  
+  frameCounter = 0;
+
+  ballx = 3;
+  bally = 3;
+  balldir = 0;
+
+  mode = GAME_MODE_WAIT;
+}
+
+// Increment waiting
+void doWaiting()
+{
+  ballx = random(1,7); //((ballx + random(0,2) + 7) % 6) + 1;
+  bally = random(1,7); //((bally + random(0,2) + 11) % 6) + 1;
+}
+
+// Stop waiting
+void stopWaiting()
+{
+  //sendCommand(CMD_STOP);
+}
+
+
 // LCD methods
 
 // Clear the player score
@@ -544,8 +608,20 @@ void playCombine(int8_t song[][2], int8_t number)
   sendBytes(nbytes);
 }
 
+void sendCommand(int8_t command)
+{
+  delay(20);
+  if((command == CMD_PLAY_W_VOL)||(command == CMD_SET_PLAY_MODE)||(command == CMD_PLAY_COMBINE))
+    return;
+  else if(command < 0x10) 
+  {
+  mp3Basic(command);
+  }
+  else return;
+ 
+}
 
-void sendCommand(int8_t command, int16_t dat = 0)
+void sendCommand(int8_t command, int16_t dat)
 {
   delay(20);
   if((command == CMD_PLAY_W_VOL)||(command == CMD_SET_PLAY_MODE)||(command == CMD_PLAY_COMBINE))
