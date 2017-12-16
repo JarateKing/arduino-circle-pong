@@ -69,14 +69,13 @@ void loop() {
 // Converts an encoded binary number to a value
 inline int convertPins(int pins[], int pinSize)
 {
-  int sum = 0;
-  int power = 1;
-  for (int i = 0; i < pinSize; i++)
+  int i = pinSize-1;
+  int result = digitalRead(pins[i--]);
+  for (; i >= 0; i--)
   {
-    sum += power * digitalRead(pins[i]);
-    power *= 2;
+    result = (result << 1) | digitalRead(pins[i]);
   }
-  return sum;
+  return result;
 }
 
 // Draws the given coordinates
