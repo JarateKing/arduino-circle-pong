@@ -11,7 +11,7 @@
 // Pin Defines
 #define JOY_X A1
 #define JOY_Y A2
-#define RESTART 3
+#define RESTART 53
 #define DATA_READY 5
 #define RND_NOISE A0
 #define SND_TX 18
