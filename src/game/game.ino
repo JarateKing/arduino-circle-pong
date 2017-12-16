@@ -9,16 +9,16 @@
 // 1 for on, 0 for off
 
 // Pin Defines
-#define RND_NOISE A0
-#define JOY_X A1
-#define JOY_Y A2
-#define DATA_READY 5
-#define TONE_PIN 9
-#define SND_TX 18
-#define SND_RX 19
-#define QUIET_BUTTON 3
+#define RND_NOISE      A0
+#define JOY_X          A1
+#define JOY_Y          A2
+#define DATA_READY     3
+#define TONE_PIN       9
+#define SND_TX         18
+#define SND_RX         19
+#define QUIET_BUTTON   5
 #define RESTART_BUTTON 52
-#define START_BUTTON 53
+#define START_BUTTON   53
 // Also not usable:
 // SDA = 20, SCL = 21
 

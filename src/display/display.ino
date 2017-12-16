@@ -1,8 +1,8 @@
 // Pin Defines
-#define DATA_READY 5
+#define DATA_READY 3
 
-// input pins
-// these decide where to display things
+// Input pins
+// These decide where to display things
 // paddlePins is the bits for a number 0-27
 // posPins is for 0-8 on both the X and Y axis
 
@@ -15,50 +15,45 @@ const int posPinsY[3] = {29,31,33};
 // COMPONENT:  1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  16
 // PIN NUMBER: 52  50  48  46  44  42  40  38  39  41  43  45  47  49  51  53
 // ROW / COL:  c1  c2  r7  c8  r8  c5  c3  r5  r6  r3  c4  r1  c6  c7  r2  r4
-// TODO: make the comment pin assignments reflect the ones used in code
 
+// Row and column pins
 const int row[8] = {45,51,41,53,44,39,48,40};
 const int col[8] = {52,50,42,43,38,47,49,46};
 
-// inputting the position, these arrays will give you what column/row to enable
-// position goes clockwise from the topright corner, 0-27
+// Inputting the position, these arrays will give you what column/row to enable
+// Position goes clockwise from the topright corner, 0-27
 // -1 is for not enabling anything
-
 const int horiColumns[28] = {0,1,2,3,4,5,6,7,-1,-1,-1,-1,-1,-1,7,6,5,4,3,2,1,0,-1,-1,-1,-1,-1,-1};
 const int horiRows[28] = {0,0,0,0,0,0,0,0,-1,-1,-1,-1,-1,-1,7,7,7,7,7,7,7,7,-1,-1,-1,-1,-1,-1};
-
 const int vertiColumns[28] = {0,-1,-1,-1,-1,-1,-1,7,7,7,7,7,7,7,7,-1,-1,-1,-1,-1,-1,0,0,0,0,0,0,0};
 const int vertiRows[28] = {0,-1,-1,-1,-1,-1,-1,0,1,2,3,4,5,6,7,-1,-1,-1,-1,-1,-1,7,6,5,4,3,2,1};
 
-// pin for indicating data is ready to receive
-// Moved to defines as that is better for Arduino
-//const int dataReadyPin = 5;
-
+// Position variables
+int paddle = 0;
+int ballx = 0;
+int bally = 0;
 
 void setup() {
-  // setup 8x8 pins for output
+  // Setup 8x8 pins for output
   for (int i = 0; i < 8; i++)
   {
     pinMode(row[i], OUTPUT);
     pinMode(col[i], OUTPUT);
   }
-  // setup paddle reading pins
+  // Setup paddle reading pins
   for (int i = 0; i < 5; i++)
   {
     pinMode(paddlePins[i], INPUT);
   }
-  // setup position reading pins
+  // Setup position reading pins
   for (int i = 0; i < 3; i++)
   {
     pinMode(posPinsX[i], INPUT);
     pinMode(posPinsY[i], INPUT);
   }
+  
   pinMode(DATA_READY, INPUT);
 }
-
-int paddle = 0;
-int ballx = 0;
-int bally = 0;
 
 void loop() {
   if (digitalRead(DATA_READY))
@@ -71,7 +66,8 @@ void loop() {
   draw(paddle,ballx,bally);
 }
 
-int convertPins(int pins[], int pinSize)
+// Converts an encoded binary number to a value
+inline int convertPins(int pins[], int pinSize)
 {
   int sum = 0;
   int power = 1;
@@ -83,7 +79,8 @@ int convertPins(int pins[], int pinSize)
   return sum;
 }
 
-void draw(int paddlePos, int pointX, int pointY) {
+// Draws the given coordinates
+inline void draw(int paddlePos, int pointX, int pointY) {
   clearDisplay();
   drawPaddleX((paddlePos + 26) % 28);
   drawPaddleX((paddlePos + 27) % 28);
@@ -105,28 +102,34 @@ void draw(int paddlePos, int pointX, int pointY) {
   delayMicroseconds(1);
 }
 
-void clearDisplay() {
+// Clears the display
+inline void clearDisplay() {
   for (int i = 0; i < 8; i++) {
     digitalWrite(col[i], HIGH);
     digitalWrite(row[i], LOW);
   }
 }
 
-void drawPaddleX(int pos) {
+// Sets the paddle X value
+inline void drawPaddleX(int pos) {
   if (horiColumns[pos] != -1 && horiRows[pos] != -1)
     drawPoint(horiColumns[pos], horiRows[pos]);
 }
-void drawPaddleY(int pos) {
+
+// Sets the paddle Y value
+inline void drawPaddleY(int pos) {
   if (vertiColumns[pos] != -1 && vertiRows[pos] != -1)
     drawPoint(vertiColumns[pos], vertiRows[pos]);
 }
 
-void drawPoint(int x, int y) {
+// Draws a point
+inline void drawPoint(int x, int y) {
   digitalWrite(col[x], LOW);
   digitalWrite(row[y], HIGH);
 }
 
-void displayBorderX() {
+// Displays an X border
+inline void displayBorderX() {
   for (int i = 0; i < 8; i++) {
     digitalWrite(row[i], HIGH);
   }
@@ -134,7 +137,9 @@ void displayBorderX() {
   digitalWrite(col[0], LOW);
   digitalWrite(col[7], LOW);
 }
-void displayBorderY() {
+
+// Displays a Y border
+inline void displayBorderY() {
   for (int i = 0; i < 8; i++) {
     digitalWrite(col[i], LOW);
   }
