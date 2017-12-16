@@ -8,7 +8,8 @@ Much like the classic game pong, the player hits a moving ball with a paddle to 
 
 #### Components:
 * A start/reset pushbutton button is available to begin the game for the first time, restart the game when the game has finished, and end it while the game is still running.
-* A joystick is used to control the paddle's position, setting the paddle position to the joystick's angle. Whenever the joystick is in a neutral position (determined by a square margin on both the x & y axis), the most recent angle it formed is what gets used.
+* A sound mode pushbutton changes between different sound volumes and modes.
+* A joystick is used to control the paddle's position, setting the paddle position to the joystick's angle. Whenever the joystick is in a neutral position (determined by a square margin on both the x & y axis), the most recent angle it formed is what gets used. As well, the joystick switch can restart the game, but only when a game is not currently active.
 * An LCD display tells the player their highscore and their current score while playing, or prompts them to press the pushbutton to begin when they're not.
 * A passive buzzer and an MP3 player play sound effects. The MP3 player plays longer sound effects when time is not a problem (due to the long delays it requires), while the passive buzzer plays short tones for sound effects that require as minimal delaying as possible (such as when the ball hits the paddle).
 * The 8x8 LED grid displays the current state of the game. While the game is being played, it displays the paddle's position and the ball's current position.
@@ -28,7 +29,7 @@ Much like the classic game pong, the player hits a moving ball with a paddle to 
 2. 1 8x8 LED Grid
 3. 1 16x2 LCD Display
 4. 1 Joystick
-5. 1 Pushbutton
+5. 2 Pushbuttons
 6. 1 Passive Buzzer
 7. 1 MP3 Player with SD card support
 
