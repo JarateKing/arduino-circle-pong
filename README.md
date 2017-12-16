@@ -1,7 +1,7 @@
 # Circle Pong
 Game implemented on two Arduino Megas
 
-### Gameplay description
+### Gameplay Description
 Much like the classic game pong, the player hits a moving ball with a paddle to prevent it from leaving the screen. However, this game has one player, and the paddle can wrap around the entire square borders. It's a one player endurance game, where you get score every time you make a save and keep the ball within the screen.
 
 ### Design & Implementation
@@ -22,6 +22,15 @@ Much like the classic game pong, the player hits a moving ball with a paddle to 
 
 
 ### Arduino setup instructions
+
+#### Parts Required
+1. 2 Arduino Megas
+2. 1 8x8 LED Grid
+3. 1 16x2 LCD Display
+4. 1 Joystick
+5. 1 Pushbutton
+6. 1 Passive Buzzer
+7. 1 MP3 Player with SD card support
 
 #### Display Arduino
 
