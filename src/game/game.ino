@@ -2,21 +2,23 @@
 
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
-//#include <SoftwareSerial.h>
 
-// Debug Mode Define
-#define DEBUG 1
+// Debug Mode Defines
+#define DEBUG 0
+#define CALOUT 0
 // 1 for on, 0 for off
 
 // Pin Defines
+#define RND_NOISE A0
 #define JOY_X A1
 #define JOY_Y A2
-#define RESTART 53
 #define DATA_READY 5
-#define RND_NOISE A0
+#define TONE_PIN 9
 #define SND_TX 18
 #define SND_RX 19
-#define TONE_PIN 9
+#define QUIET_BUTTON 3
+#define RESTART_BUTTON 52
+#define START_BUTTON 53
 // Also not usable:
 // SDA = 20, SCL = 21
 
@@ -25,36 +27,49 @@
 #define N_POSITION_PINS 3
 
 // Joystick Input
-#define X_IN_MAX 540
-#define X_IN_CNT 520
-#define X_IN_MIN 500
-#define Y_IN_MAX 540
-#define Y_IN_CNT 520
-#define Y_IN_MIN 500
+#define X_CENTRE 515
+#define Y_CENTRE 520
+#define J_WINDOW 50
+#define X_C_HIGH X_CENTRE+J_WINDOW
+#define X_C_LOW  X_CENTRE-J_WINDOW
+#define Y_C_HIGH Y_CENTRE+J_WINDOW
+#define Y_C_LOW  Y_CENTRE-J_WINDOW
 
 // Drawing Constants
 #define FRAME_COUNT 20
 #define FRAME_DELAY 10
 
-// MP3 Controls
-#define SND_HIT 0x0101
-#define SND_MISS 0x0102
-#define SND_HIGHSCORE 0x0103
-#define SND_LOSE 0x0104
-#define SND_START 0x0105
-#define SND_WAIT 0x0106
-#define SND_MUSIC 0x0201
-#define SND_FOLDER 0x0200
+// Sound defines
 
-#define SND_VOLUME 0x10
+// Sound files
+#define SND_HIT       0x0101
+#define SND_MISS      0x0102
+#define SND_HIGHSCORE 0x0103
+#define SND_LOSE      0x0104
+#define SND_START     0x0105
+#define SND_WAIT      0x0106
+#define SND_MUSIC     0x0201
+#define SND_FOLDER    0x0200
+
+// Volume levels
+#define SND_VOLUME 0x18
+#define SND_VOLUME_QUIET 0x10
+
+// Quiet levels
+#define QUIET_LEVELS      5
+#define QUIET_LEVEL_NONE  4
+#define QUIET_LEVEL_TONES 3
+#define QUIET_LEVEL_NWAIT 2
+#define QUIET_LEVEL_LVOL  1
+#define QUIET_LEVEL_OFF   0
 
 // Tones, set identical to original pong game
 #define TONE_WALL 226
-#define DUR_WALL 16
-#define TONE_HIT 459
-#define DUR_HIT 96
+#define DUR_WALL  16
+#define TONE_HIT  459
+#define DUR_HIT   96
 #define TONE_MISS 490
-#define DUR_MISS 257
+#define DUR_MISS  257
 
 // Modes
 #define GAME_MODE_PLAY 0
@@ -97,25 +112,15 @@
   
 #define CMD_PLAY_COMBINE 0X45//can play combination up to 15 songs
 
+// MP3 stuff
 static int8_t Send_buf[6] = {0};
 void sendCommand(int8_t command, int16_t dat );
 
-// Component Drivers
+// Components
 LiquidCrystal_I2C lcd(0x38, 16, 2);
-//SoftwareSerial mp3(SND_RX, SND_TX);
 
-// Math Defines
-
-// score variables
-long currentScore;
-long bestScore;
-
-// joystick input
-float angle;
-int discreteAngle;
-
-// display output pins
-// these decide where to display things
+// Display output pins
+// These decide where to display things
 // paddlePins is the bits for a number 0-27
 // posPins is for 0-8 on both the X and Y axis
 
@@ -123,95 +128,150 @@ const int paddlePins[5] = {22,24,26,28,30};
 const int posPinsX[3] = {23,25,27};
 const int posPinsY[3] = {29,31,33};
 
-// framerate input
+// Score variables
+long currentScore;
+long bestScore;
+
+// Joystick input
+float angle;
+int discreteAngle;
+
+// Framerate counter
 int frameCounter;
 
-// ball position
+// Joystick position
+int x;
+int y;
+
+// Ball position
 int ballx;
 int bally;
 int balldir;
+
+// State variables
 int mode;
+int quietLevel;
 
 void setup() {
-  #if DEBUG > 0
+  #if DEBUG > 0 || CALOUT > 0
     // If DEBUG is defined to 1 in the defines (top) setup the serial out for debugging
     // Open serial communications and wait for port to open:
     Serial.begin(9600);
   #endif
   
-  // setup paddle reading pins
+  // Setup paddle reading pins
   for (int i = 0; i < N_PADDLE_PINS; i++)
   {
     pinMode(paddlePins[i], OUTPUT);
   }
-  // setup position reading pins
+  // Setup position reading pins
   for (int i = 0; i < N_POSITION_PINS; i++)
   {
     pinMode(posPinsX[i], OUTPUT);
     pinMode(posPinsY[i], OUTPUT);
   }
-  
+
+  // Setup display communication pin
   pinMode(DATA_READY, OUTPUT);
 
-  // scoreboard setup
+  // Setup buttons
+  pinMode(START_BUTTON, INPUT);
+  pinMode(RESTART_BUTTON, INPUT);
+  pinMode(QUIET_BUTTON, INPUT);
+
+  // Setup scoreboard
   lcd.init();
   lcd.backlight();
   bestScore = 0;
   drawHighScore();
   
-  // MP3 uses serial1
-  // audio setup
+  // Setup audio
+  
+  // MP3 uses Serial1
   Serial1.begin(9600);
   delay(500);
   sendCommand(CMD_SEL_DEV, DEV_TF);
   delay(500);
   setVolume(SND_VOLUME);
   delay(500);
+  
+  // Passive Buzzer for Pong sounds
+  pinMode(TONE_PIN, OUTPUT);
 
-  // joystick setup
+  // Initialize quiet level
+  quietLevel = 0;
+
+  // Setup random generator
+  randomSeed(analogRead(RND_NOISE));
+
+  // Initialize joysitck values
   angle = 0.0;
   discreteAngle = 0;
-
-  // rng setup
-  randomSeed(analogRead(RND_NOISE));
 
   // game setup
   startWaiting();
 }
 
 void loop() {
-  int x = analogRead(JOY_X);
-  int y = analogRead(JOY_Y);
-  // Migrated constants to defines mostly for consistency, I can undo it if you'd rather
-  if ((x > X_IN_MAX || x < X_IN_MIN) || (y > Y_IN_MAX || y < Y_IN_MIN)) // Are we sure about this?
+  // Read in joystick position
+  x = analogRead(JOY_X);
+  y = analogRead(JOY_Y);
+
+  #if CALOUT > 0
+    Serial.println("Joystick: "+String(x)+" "+String(y));
+  #endif
+  
+  // Determin paddle position
+  if ((x > X_C_HIGH || x < X_C_LOW) || (y > Y_C_HIGH || y < Y_C_LOW))
   {
-    angle = atan2(x-X_IN_CNT,y-Y_IN_CNT); // -pi to pi // Does this need math.h import?
-    // This should be faster and equivalent
-    discreteAngle = (int)(53 - (angle + 3.14159) * 4.45634) % 28; //(int)(25 - (angle + 3.14) / 6.28 * 28 + 28) % 28;
+    // Find angle
+    angle = atan2(x-X_CENTRE,y-Y_CENTRE); // -pi to pi
+    discreteAngle = (int)(53 - (angle + 3.14159) * 4.45634) % 28; //means: (int)(25 - (angle + 3.14) / 6.28 * 28 + 28) % 28;
   }
 
-  if (digitalRead(RESTART))
+  if (debounced(QUIET_BUTTON))
+  {
+    // Set quiet level and volume (as necessary)
+    quietLevel = (quietLevel + 1) % QUIET_LEVELS;
+    if (quietLevel == QUIET_LEVEL_OFF)
+    {
+      setVolume(SND_VOLUME);
+      if (isWaiting) playWithFolder(SND_MUSIC);
+    }
+    else if (quietLevel == QUIET_LEVEL_LVOL) setVolume(SND_VOLUME_QUIET);
+    else if (quietLevel == QUIET_LEVEL_TONES || quietLevel == QUIET_LEVEL_NWAIT && isWaiting()) sendCommand(CMD_STOP);
+
+    #if DEBUG > 0
+      Serial.println("Quiet level: "+String(quietLevel));
+    #endif
+  }
+  
+  // Check for (re)start or run the game
+  if (debounced(START_BUTTON) || (isWaiting() && debouncedNeg(RESTART_BUTTON)))
   {
     gameStart();
   }
   else
   {
+    // Send
     sendNumber(paddlePins, 5, discreteAngle);
     sendNumber(posPinsX, 3, ballx);
     sendNumber(posPinsY, 3, bally);
-    
+
+    // Advize of new information
     digitalWrite(DATA_READY, HIGH);
     delay(2);
     digitalWrite(DATA_READY, LOW);
   
-    // perform updates
+    // Update state
     frameCounter++;
     if (frameCounter > FRAME_COUNT)
     {
-      frameCounter = 0;
+      frameCounter = 0; // Reinitialize frame count
 
-      if (mode == GAME_MODE_WAIT) {
-          doWaiting();
+      if (isWaiting())
+      {
+          doWaiting(); // Change waiting display
       }
       else
       {
@@ -219,64 +279,67 @@ void loop() {
         // Each corner & each side has their own opposing angle, that will have variance added on
         if ((ballx == 1 && bally == 1) && (discreteAngle <= 2 || discreteAngle >= 26))
         {
-          hit();
-          balldir = nextDirection(1);
+          hit(); // Register hit
+          balldir = nextDirection(1); // Reflect
         }
         else if ((ballx == 6 && bally == 1) && (discreteAngle >= 5 && discreteAngle <= 9))
         {
-          hit();
-          balldir = nextDirection(3);
+          hit(); // Register hit
+          balldir = nextDirection(3); // Reflect
         }
         else if ((ballx == 6 && bally == 6) && (discreteAngle >= 12 && discreteAngle <= 16))
         {
-          hit();
-          balldir = nextDirection(5);
+          hit(); // Register hit
+          balldir = nextDirection(5); // Reflect
         }
         else if ((ballx == 1 && bally == 6) && (discreteAngle >= 19 && discreteAngle <= 23))
         {
-          hit();
-          balldir = nextDirection(7);
+          hit(); // Register hit
+          balldir = nextDirection(7); // Reflect
         }
         else if (ballx == 1 && ((discreteAngle >= 28 - bally - 2 && discreteAngle <= 28 - bally + 2)
                                 || (discreteAngle == 0 && bally == 2)))
         {
-          hit();
-          balldir = nextDirection(0);
+          hit(); // Register hit
+          balldir = nextDirection(0); // Reflect
         }
         else if (bally == 1 && (discreteAngle >= ballx - 2 && discreteAngle <= ballx + 2))
         {
-          hit();
-          balldir = nextDirection(2);
+          hit(); // Register hit
+          balldir = nextDirection(2); // Reflect
         }
         else if (ballx == 6 && (discreteAngle >= 7 + bally - 2 && discreteAngle <= 7 + bally + 2))
         {
-          hit();
-          balldir = nextDirection(4);
+          hit(); // Register hit
+          balldir = nextDirection(4); // Reflect
         }
         else if (bally == 6 && (discreteAngle >= 21 - ballx - 2 && discreteAngle <= 21 - ballx + 2))
         {
-          hit();
-          balldir = nextDirection(6);
+          hit(); // Register hit
+          balldir = nextDirection(6); // Reflect
         }
         else if (ballx == 1 || bally == 1 || ballx == 6 || bally == 6)
         {
-          miss();
+          miss(); // Register miss
           
           if (currentScore > bestScore)
-            highscore();
+            highscore(); // Register highscore
           else
-            loss();
+            loss(); // Register loss
           
-          // Preprocessor commands for safety
+          // Debug output
           #if DEBUG > 0
             Serial.println("x:" + String(ballx));
             Serial.println("y:" + String(bally));
           #endif
-          
+
+          // Move to waiting mode
           startWaiting();
         }
-        
-        switch (balldir) {
+
+        // Move the ball
+        switch (balldir)
+        {
           case 0:
             ballx++;
             break;
@@ -307,6 +370,7 @@ void loop() {
             break;
         }
         
+        // Debug output
         #if DEBUG > 0
           debugDraw(discreteAngle, ballx, bally);
         #endif
@@ -314,47 +378,109 @@ void loop() {
     }
   }
 
+  // Keep the game sufficiently slow
   delay(FRAME_DELAY);
 }
 
-// determine the ball's direction, with variance
-// given the "perfect" direction for where it hit as its input
+// Run helper methods
+
+// Determine the ball's direction, with variance
+// Given the "perfect" direction for where it hit as its input
 inline int nextDirection(int in)
 {
   return (in + random(-1,2) + 8) % 8;
 }
 
 // Play hit tone
-inline void hit() {
-  //playWithFolder(SND_HIT);
-  //delay(100);
-  tone(TONE_PIN, TONE_HIT);
-  delay(DUR_HIT);
-  noTone(TONE_PIN);
+inline void hit()
+{
+  if (quietLevel < QUIET_LEVEL_NONE)
+  {
+    // Tone identical to original Pong game
+    tone(TONE_PIN, TONE_HIT);
+    delay(DUR_HIT);
+    noTone(TONE_PIN);
+    
+    //playWithFolder(SND_HIT);
+    //delay(100);
+  } else {
+    delay(DUR_HIT); 
+  }
   currentScore++;
   drawScore();
 }
 
 // Play miss tone
-inline void miss() {
-  tone(TONE_PIN, TONE_MISS);
-  delay(DUR_MISS);
-  noTone(TONE_PIN);
+inline void miss()
+{
+  if (quietLevel < QUIET_LEVEL_NONE)
+  {
+    // Tone identical to original Pong game
+    tone(TONE_PIN, TONE_MISS);
+    delay(DUR_MISS);
+    noTone(TONE_PIN);
+  } else {
+    delay(DUR_MISS); 
+  }
 }
 
 // Register high score
-inline void highscore() {
-  playWithFolder(SND_HIGHSCORE);
+inline void highscore()
+{
+  // Play loss sound
+  if (quietLevel < QUIET_LEVEL_TONES) playWithFolder(SND_HIGHSCORE);
+
+  // Redraw highscore
   clearHighScore();
   bestScore = currentScore;
   drawHighScore();
+
+  // Delay
   delay(2000);
 }
 
 // Register loss
-inline void loss() {
-  playWithFolder(SND_LOSE);
+inline void loss()
+{
+  // Play loss sound
+  if (quietLevel < QUIET_LEVEL_TONES) playWithFolder(SND_LOSE);
+
+  // Delay
   delay(1000);
+}
+
+// Debounce button
+inline boolean debounced(int pin)
+{
+  if (digitalRead(pin))
+  {
+    delay(100);
+    return digitalRead(pin);
+  }
+  return false;
+}
+
+// Debounce button
+inline boolean debouncedNeg(int pin)
+{
+  if (!digitalRead(pin))
+  {
+    delay(100);
+    return !digitalRead(pin);
+  }
+  return false;
+}
+
+// If is waiting
+inline boolean isWaiting()
+{
+  return mode == GAME_MODE_WAIT;
+}
+
+// If is running a game
+inline boolean isRunning()
+{
+  return mode == GAME_MODE_PLAY;
 }
 
 // Game modes
@@ -362,53 +488,64 @@ inline void loss() {
 // Start new game
 void gameStart()
 {
-  if (mode == GAME_MODE_WAIT) stopWaiting();
+  // If waiting, ensure tat it is finished
+  if (isWaiting()) stopWaiting();
   
-  // start sound
-  playWithFolder(SND_START);
+  // Play start sound
+  if (quietLevel < QUIET_LEVEL_TONES) playWithFolder(SND_START);
   
+  // Clear the display and draw the score
   clearScore();
   currentScore = 0;
   drawScore();
   
+  // Initialize frame counter
   frameCounter = 0;
 
-  ballx = 3;
-  bally = 3;
-  balldir = 0;
+  // Initialize positions
+  ballx = 3; // random(3,5);
+  bally = 3; // random(3,5);
+  balldir = 0; // random(0,8);
 
+  // Set mode
   mode = GAME_MODE_PLAY;
-  
-  delay(500);
+
+  // Give the player a chance to start
+  delay(1000);
 }
 
 // Start waiting for a new game
 void startWaiting()
 {
-  // Start waiting music (Composed by a Mister C. Vessey....)
-  playWithFolder(SND_MUSIC);
+  // Start waiting music (Composed by C. Vessey :))
+  if (quietLevel < QUIET_LEVEL_NWAIT) playWithFolder(SND_MUSIC);
 
-  // Tried
+  // Tried and failed:
   //playWithFolder(SND_MUSIC);
   //setCyleMode(ALL_CYCLE);
   //setCyleMode(SINGLE_CYCLE);
-  
+
+  // Clear the score and draw the waiting message
   clearScore();
   currentScore = 0;
   drawWaiting();
-  
+
+  // Initialize frame counter
   frameCounter = 0;
 
-  ballx = 3;
-  bally = 3;
+  // Initialize positions
+  ballx = random(3,5);
+  bally = random(3,5);
   balldir = 0;
 
+  // Set mode
   mode = GAME_MODE_WAIT;
 }
 
 // Increment waiting
 void doWaiting()
 {
+  // Set new random position
   ballx = random(1,7); //((ballx + random(0,2) + 7) % 6) + 1;
   bally = random(1,7); //((bally + random(0,2) + 11) % 6) + 1;
 }
@@ -416,28 +553,28 @@ void doWaiting()
 // Stop waiting
 void stopWaiting()
 {
-  //sendCommand(CMD_STOP);
+  sendCommand(CMD_STOP);
 }
 
 
 // LCD methods
 
 // Clear the player score
-void clearScore()
+inline void clearScore()
 {
   lcd.setCursor(0,1);
   lcd.print(F("                "));
 }
 
 // Clear the high score
-void clearHighScore()
+inline void clearHighScore()
 {
   lcd.setCursor(0,0);
   lcd.print(F("                "));
 }
 
 // Draw the player score
-void drawScore()
+inline void drawScore()
 {
   lcd.setCursor(0,1);
   lcd.print(F("SCORE"));
@@ -445,7 +582,7 @@ void drawScore()
 }
 
 // Draw the high score
-void drawHighScore()
+inline void drawHighScore()
 {
   lcd.setCursor(0,0);
   lcd.print(F("BEST"));
@@ -453,22 +590,23 @@ void drawHighScore()
 }
 
 // Draw the waiting message
-void drawWaiting()
+inline void drawWaiting()
 {
   lcd.setCursor(0,1);
   lcd.print(F("Press start now!"));
 }
 
+// Draws a number on the given row of the LCD screen
 inline void drawNumberOn(long number, int row)
 {
   // ltoa would be better, but unsure how to best use it
-  // Since it needs to be printed, it is fastest to geth the length this way I think
   String asString = String(number);
   lcd.setCursor(16 - asString.length(),row);
   lcd.print(asString);
 }
 
-void sendNumber(int pins[], int pinSize, int num)
+// Send a value to the given pins as a binary number
+inline void sendNumber(int pins[], int pinSize, int num)
 {
   for (int i = 0; i < pinSize; i++)
   {
@@ -476,9 +614,10 @@ void sendNumber(int pins[], int pinSize, int num)
   }
 }
 
-// draw current display board to serial monitor
-// is not a clean function, but is functional for debugging
-// Preprocessor commands added for safety
+// Debug functions
+
+// Draws current display board to serial monitor
+// Is not a clean function, but is functional for debugging
 void debugDraw(int paddle, int x, int y)
 {
   #if DEBUG > 0
@@ -556,35 +695,35 @@ void debugDraw(int paddle, int x, int y)
 
 // MP3 Methods
 
-void setVolume(int8_t vol)
+inline void setVolume(int8_t vol)
 {
   mp3_5bytes(CMD_SET_VOLUME, vol);
 }
 
-void playWithFolderAndVolume(int16_t dat, int8_t vol)
+inline void playWithFolderAndVolume(int16_t dat, int8_t vol)
 {
   // dat represents the command portion after Play with Folder and Filename
   setVolume(vol); // call helper method, above
   mp3_6bytes(CMD_PLAY_FILE_NAME, dat); // play as directed
 }
 
-void playWithFolder(int16_t dat)
+inline void playWithFolder(int16_t dat)
 {
   mp3_6bytes(CMD_PLAY_FILE_NAME, dat);
 }
 
-void playWithVolume(int16_t dat)
+inline void playWithVolume(int16_t dat)
 {
   mp3_6bytes(CMD_PLAY_W_VOL, dat);
 }
 
 /*cycle play with an index*/
-void cyclePlay(int16_t index)
+inline void cyclePlay(int16_t index)
 {
   mp3_6bytes(CMD_SET_PLAY_MODE,index);
 }
 
-void setCyleMode(int8_t AllSingle)
+inline void setCyleMode(int8_t AllSingle)
 {
   mp3_5bytes(CMD_SET_PLAY_MODE,AllSingle);
 }
@@ -669,7 +808,7 @@ void mp3_6bytes(int8_t command, int16_t dat)
   Send_buf[5] = 0xef; //
   sendBytes(6);
 }
-void sendBytes(uint8_t nbytes)
+inline void sendBytes(uint8_t nbytes)
 {
   for(uint8_t i=0; i < nbytes; i++)//
   {
