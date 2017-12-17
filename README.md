@@ -50,5 +50,6 @@ Much like the classic game pong, the player hits a moving ball with a paddle to 
 ### Build instructions
 
 * Copy folders in /audio/ to an SD card to use with mp3 player
+* Wire as per diagrams
 * Compile and send display.ino to the display Arduino
 * Compile and send game.ino to the game Arduino
