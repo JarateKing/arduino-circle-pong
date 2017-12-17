@@ -15,7 +15,7 @@ Much like the classic game pong, the player hits a moving ball with a paddle to 
 * The 8x8 LED grid displays the current state of the game. While the game is being played, it displays the paddle's position and the ball's current position.
 
 #### Arduinos:
-  The display Arduino handles displaying the game state to the 8x8 LED grid. By having this on its own arduino, a more consistent lighting can be achieved (because displaying a paddle + ball requires rapidly alternating between 3 different configurations -- the horizontal border, the vertical borders, and the ball position). Whenever the data pin is active, this arduino receives the position of the paddle (expressed as a binary number 0-27, requiring 5 pins) and the x and y coordinates of the ball (each expressed as a binary number 0-8, requiring 3 pins each).
+  The display Arduino handles displaying the game state to the 8x8 LED grid. By having this on its own arduino, a more consistent lighting can be achieved (because displaying a paddle + ball requires rapidly alternating between 3 different configurations -- the horizontal border, the vertical borders, and the ball position). Whenever the data pin turns high, this arduino reads the interrupt which triggers it to receive the position of the paddle (expressed as a binary number 0-27, requiring 5 pins) and the x and y coordinates of the ball (each expressed as a binary number 0-8, requiring 3 pins each).
   
   If debugging is enabled within game.ino, the serial monitor can emulate the display arduino.
   
@@ -35,12 +35,12 @@ Much like the classic game pong, the player hits a moving ball with a paddle to 
 
 #### Display Arduino
 
-* Pins to game arduino: 5, 22 - 31, 33
+* Pins to game arduino: 5 (interrupt pin), 22 - 31, 33
 * Pins to 8x8: 40 - 53
 
 #### Game Arduino
 
-* Pins to display arduino: 5, 22 - 31, 33
+* Pins to display arduino: 5 (interrupt pin), 22 - 31, 33
 * Pins to reset button: 3
 * Pins to LCD: 20, 21
 * Pins to joystick: A1, A2
