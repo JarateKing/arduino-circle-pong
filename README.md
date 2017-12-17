@@ -24,6 +24,9 @@ Much like the classic game pong, the player hits a moving ball with a paddle to 
 
 ### Arduino setup instructions
 
+![diagram](/Fritzing/CS2710CirclePong_bb.png "Diagram")
+![schematic](/Fritzing/CS2710CirclePong_schem.png "Schematic")
+
 #### Parts Required
 1. 2 Arduino Megas
 2. 1 8x8 LED Grid
