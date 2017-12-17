@@ -260,7 +260,7 @@ void loop() {
 
     // Advize of new information
     digitalWrite(DATA_READY, HIGH);
-    delay(2);
+    delayMicroseconds(100);//delay(1);
     digitalWrite(DATA_READY, LOW);
   
     // Update state

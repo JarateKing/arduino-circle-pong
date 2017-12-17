@@ -1,6 +1,11 @@
 // Pin Defines
 #define DATA_READY 3
 
+// Array Constants
+#define SIZE 8
+#define N_PADDLE_PINS 5
+#define N_POSITION_PINS 3
+
 // Input pins
 // These decide where to display things
 // paddlePins is the bits for a number 0-27
@@ -33,37 +38,43 @@ int paddle = 0;
 int ballx = 0;
 int bally = 0;
 
-void setup() {
+void setup()
+{
   // Setup 8x8 pins for output
-  for (int i = 0; i < 8; i++)
+  for (int i = 0; i < SIZE; i++)
   {
     pinMode(row[i], OUTPUT);
     pinMode(col[i], OUTPUT);
   }
   // Setup paddle reading pins
-  for (int i = 0; i < 5; i++)
+  for (int i = 0; i < N_PADDLE_PINS; i++)
   {
     pinMode(paddlePins[i], INPUT);
   }
   // Setup position reading pins
-  for (int i = 0; i < 3; i++)
+  for (int i = 0; i < N_POSITION_PINS; i++)
   {
     pinMode(posPinsX[i], INPUT);
     pinMode(posPinsY[i], INPUT);
   }
-  
-  pinMode(DATA_READY, INPUT);
+
+  //pinMode(DATA_READY, INPUT_PULLUP);
+
+  // Set interrupt
+  attachInterrupt(digitalPinToInterrupt(DATA_READY), readData, RISING);
 }
 
-void loop() {
-  if (digitalRead(DATA_READY))
-  {
-    paddle = convertPins(paddlePins, 5);
-    ballx = convertPins(posPinsX, 3);
-    bally = convertPins(posPinsY, 3);
-  }
-  
+void loop()
+{
   draw(paddle,ballx,bally);
+}
+
+// Read in display information, used by interrupt
+void readData()
+{
+  paddle = convertPins(paddlePins, 5);
+  ballx = convertPins(posPinsX, N_POSITION_PINS);
+  bally = convertPins(posPinsY, N_POSITION_PINS);
 }
 
 // Converts an encoded binary number to a value
@@ -72,14 +83,14 @@ inline int convertPins(int pins[], int pinSize)
   int i = pinSize-1;
   int result = digitalRead(pins[i--]);
   for (; i >= 0; i--)
-  {
     result = (result << 1) | digitalRead(pins[i]);
-  }
+
   return result;
 }
 
 // Draws the given coordinates
-inline void draw(int paddlePos, int pointX, int pointY) {
+inline void draw(int paddlePos, int pointX, int pointY)
+{
   clearDisplay();
   drawPaddleX((paddlePos + 26) % 28);
   drawPaddleX((paddlePos + 27) % 28);
@@ -102,46 +113,51 @@ inline void draw(int paddlePos, int pointX, int pointY) {
 }
 
 // Clears the display
-inline void clearDisplay() {
-  for (int i = 0; i < 8; i++) {
+inline void clearDisplay()
+{
+  for (int i = 0; i < 8; i++)
+  {
     digitalWrite(col[i], HIGH);
     digitalWrite(row[i], LOW);
   }
 }
 
 // Sets the paddle X value
-inline void drawPaddleX(int pos) {
+inline void drawPaddleX(int pos)
+{
   if (horiColumns[pos] != -1 && horiRows[pos] != -1)
     drawPoint(horiColumns[pos], horiRows[pos]);
 }
 
 // Sets the paddle Y value
-inline void drawPaddleY(int pos) {
+inline void drawPaddleY(int pos)
+{
   if (vertiColumns[pos] != -1 && vertiRows[pos] != -1)
     drawPoint(vertiColumns[pos], vertiRows[pos]);
 }
 
 // Draws a point
-inline void drawPoint(int x, int y) {
+inline void drawPoint(int x, int y)
+{
   digitalWrite(col[x], LOW);
   digitalWrite(row[y], HIGH);
 }
 
 // Displays an X border
-inline void displayBorderX() {
-  for (int i = 0; i < 8; i++) {
+inline void displayBorderX()
+{
+  for (int i = 0; i < SIZE; i++)
     digitalWrite(row[i], HIGH);
-  }
 
   digitalWrite(col[0], LOW);
   digitalWrite(col[7], LOW);
 }
 
 // Displays a Y border
-inline void displayBorderY() {
-  for (int i = 0; i < 8; i++) {
+inline void displayBorderY()
+{
+  for (int i = 0; i < SIZE; i++)
     digitalWrite(col[i], LOW);
-  }
 
   digitalWrite(row[0], HIGH);
   digitalWrite(row[7], HIGH);
